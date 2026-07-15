@@ -23,6 +23,7 @@ class LevelSummary(BaseModel):
     accent: str
     reward_xp: int = Field(ge=0)
     question_count: int = Field(ge=0)
+    prerequisite_level_id: str | None = None
 
 
 class QuestionPublic(BaseModel):
@@ -40,4 +41,3 @@ class AnswerRequest(BaseModel):
 class AnswerResult(BaseModel):
     correct: bool
     feedback: str
-

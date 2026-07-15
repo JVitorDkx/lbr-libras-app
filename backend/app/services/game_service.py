@@ -62,6 +62,7 @@ class GameService:
                 accent="violet",
                 reward_xp=250,
                 question_count=len(self._questions["cumprimentos"]),
+                prerequisite_level_id=None,
             ),
             LevelSummary(
                 id="alfabeto",
@@ -72,6 +73,7 @@ class GameService:
                 accent="cyan",
                 reward_xp=300,
                 question_count=0,
+                prerequisite_level_id="cumprimentos",
             ),
             LevelSummary(
                 id="numeros",
@@ -82,6 +84,7 @@ class GameService:
                 accent="amber",
                 reward_xp=300,
                 question_count=0,
+                prerequisite_level_id="alfabeto",
             ),
         ]
 
@@ -112,4 +115,3 @@ class GameService:
 
 
 game_service = GameService()
-

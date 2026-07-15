@@ -21,6 +21,9 @@ def test_levels_begin_with_greetings_available() -> None:
     assert levels[0]["id"] == "cumprimentos"
     assert levels[0]["status"] == "available"
     assert levels[1]["status"] == "locked"
+    assert levels[0]["prerequisite_level_id"] is None
+    assert levels[1]["prerequisite_level_id"] == "cumprimentos"
+    assert levels[2]["prerequisite_level_id"] == "alfabeto"
 
 
 def test_answer_validation_does_not_expose_answer_in_question() -> None:
@@ -35,4 +38,3 @@ def test_answer_validation_does_not_expose_answer_in_question() -> None:
     )
     assert answer_response.status_code == 200
     assert answer_response.json()["correct"] is True
-
