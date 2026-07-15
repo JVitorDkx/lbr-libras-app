@@ -41,3 +41,13 @@ class AnswerRequest(BaseModel):
 class AnswerResult(BaseModel):
     correct: bool
     feedback: str
+    correct_answer: str
+
+
+class PlayerProgress(BaseModel):
+    completed_level_ids: list[str]
+    xp: int = Field(ge=0)
+
+
+class CompleteLevelResult(PlayerProgress):
+    awarded_xp: int = Field(ge=0)

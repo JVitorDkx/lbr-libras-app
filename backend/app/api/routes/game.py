@@ -1,6 +1,13 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.models.game import AnswerRequest, AnswerResult, LevelSummary, QuestionPublic
+from app.models.game import (
+    AnswerRequest,
+    AnswerResult,
+    CompleteLevelResult,
+    LevelSummary,
+    PlayerProgress,
+    QuestionPublic,
+)
 from app.services.game_service import game_service
 
 
@@ -35,3 +42,19 @@ def validate_answer(level_id: str, question_id: str, payload: AnswerRequest) -> 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pergunta não encontrada")
     return result
 
+
+@router.get("/progress", response_model=PlayerProgress, summary="Consultar progresso do protótipo")
+def get_progress() -> PlayerProgress:
+    return game_service.get_progress()
+
+
+@router.post(
+    "/levels/{level_id}/complete",
+    response_model=CompleteLevelResult,
+    summary="Concluir um nível e conceder XP uma única vez",
+)
+def complete_level(level_id: str) -> CompleteLevelResult:
+    result = game_service.complete_level(level_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nível não encontrado")
+    return result

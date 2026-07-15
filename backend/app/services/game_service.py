@@ -2,9 +2,11 @@ from dataclasses import dataclass
 
 from app.models.game import (
     AnswerResult,
+    CompleteLevelResult,
     LevelStatus,
     LevelSummary,
     MediaType,
+    PlayerProgress,
     QuestionPublic,
 )
 
@@ -30,6 +32,8 @@ class QuestionRecord:
 
 class GameService:
     def __init__(self) -> None:
+        self._completed_level_ids: set[str] = set()
+        self._xp = 0
         self._questions: dict[str, list[QuestionRecord]] = {
             "cumprimentos": [
                 QuestionRecord(
@@ -47,6 +51,22 @@ class GameService:
                     media_url="/media/signs/bom-dia-placeholder.svg",
                     options=["Olá", "Bom dia", "Boa tarde", "Tchau"],
                     correct_answer="Bom dia",
+                ),
+                QuestionRecord(
+                    id="boa-tarde",
+                    prompt="Qual cumprimento está sendo apresentado?",
+                    media_type=MediaType.VIDEO,
+                    media_url="/media/signs/boa-tarde-placeholder.mp4",
+                    options=["Olá", "Bom dia", "Boa tarde", "Tchau"],
+                    correct_answer="Boa tarde",
+                ),
+                QuestionRecord(
+                    id="tchau",
+                    prompt="Qual cumprimento está sendo apresentado?",
+                    media_type=MediaType.GIF,
+                    media_url="/media/signs/tchau-placeholder.gif",
+                    options=["Olá", "Bom dia", "Boa tarde", "Tchau"],
+                    correct_answer="Tchau",
                 ),
             ]
         }
@@ -111,7 +131,38 @@ class GameService:
             if is_correct
             else "Quase! Observe o sinal novamente e tente outra resposta."
         )
-        return AnswerResult(correct=is_correct, feedback=feedback)
+        return AnswerResult(
+            correct=is_correct,
+            feedback=feedback,
+            correct_answer=question.correct_answer,
+        )
+
+    def get_progress(self) -> PlayerProgress:
+        return PlayerProgress(
+            completed_level_ids=sorted(self._completed_level_ids),
+            xp=self._xp,
+        )
+
+    def complete_level(self, level_id: str) -> CompleteLevelResult | None:
+        level = next((item for item in self.list_levels() if item.id == level_id), None)
+        if level is None:
+            return None
+
+        awarded_xp = 0
+        if level_id not in self._completed_level_ids:
+            self._completed_level_ids.add(level_id)
+            awarded_xp = level.reward_xp
+            self._xp += awarded_xp
+
+        return CompleteLevelResult(
+            completed_level_ids=sorted(self._completed_level_ids),
+            xp=self._xp,
+            awarded_xp=awarded_xp,
+        )
+
+    def reset_progress(self) -> None:
+        self._completed_level_ids.clear()
+        self._xp = 0
 
 
 game_service = GameService()

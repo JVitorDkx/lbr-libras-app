@@ -33,9 +33,15 @@ O frontend ficará disponível em `http://localhost:5173`.
 
 1. ✅ Fundação full stack e design system.
 2. ✅ Menu principal, trilha dinâmica, XP e desbloqueio local.
-3. Área de jogo e feedback imediato.
-4. Conclusão, XP e persistência de progresso.
+3. ✅ Área de jogo com quatro questões, mídia visual e feedback imediato.
+4. ✅ Conclusão idempotente, +250 XP e persistência de progresso.
 
 ## Progresso local do protótipo
 
-O menu consulta `GET /api/game/levels` e aplica os pré-requisitos informados pela API. Durante o Bloco 2, o painel "Modo de validação do protótipo" permite simular a conclusão de Cumprimentos, adicionar 250 XP e desbloquear Alfabeto. O resultado é salvo no `LocalStorage` do navegador.
+O menu consulta `GET /api/game/levels` e aplica os pré-requisitos informados pela API. O Nível 1 carrega as questões por `GET /api/game/levels/{level_id}/questions`, valida cada escolha por `POST /api/game/levels/{level_id}/questions/{question_id}/answer` e registra a conclusão por `POST /api/game/levels/{level_id}/complete`.
+
+O progresso fica sincronizado com a API em memória e com o `LocalStorage` do navegador. A conclusão é idempotente: repetir uma aula não concede XP duplicado.
+
+## Mídia de Libras
+
+O componente de mídia aceita imagem, GIF e vídeo. Enquanto os sinais reais não forem gravados e validados por um profissional de Libras, o jogo exibe um estado visual de demonstração claramente identificado, evitando apresentar gestos inventados como conteúdo pedagógico.

@@ -13,3 +13,23 @@ export interface GameLevel {
 }
 
 export type LevelViewStatus = "completed" | "available" | "locked";
+
+export interface GameQuestion {
+  id: string;
+  prompt: string;
+  media_type: "image" | "gif" | "video";
+  media_url: string;
+  options: string[];
+}
+
+export interface AnswerResult {
+  correct: boolean;
+  feedback: string;
+  correct_answer: string;
+}
+
+export interface CompleteLevelResult {
+  completed_level_ids: string[];
+  xp: number;
+  awarded_xp: number;
+}
