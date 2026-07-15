@@ -33,3 +33,8 @@ export interface CompleteLevelResult {
   xp: number;
   awarded_xp: number;
 }
+
+export interface ApiPlayerProgress {
+  completed_level_ids: string[];
+  xp: number;
+}

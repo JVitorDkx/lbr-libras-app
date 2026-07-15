@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, Field
@@ -51,3 +52,10 @@ class PlayerProgress(BaseModel):
 
 class CompleteLevelResult(PlayerProgress):
     awarded_xp: int = Field(ge=0)
+
+
+class AnswerAttemptSummary(BaseModel):
+    question_id: str
+    selected_answer: str
+    correct: bool
+    answered_at: datetime

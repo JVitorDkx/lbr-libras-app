@@ -26,6 +26,9 @@ export function QuestionMedia({ question }: QuestionMediaProps) {
           loop
           muted
           playsInline
+          controls
+          controlsList="nodownload"
+          preload="metadata"
           onError={() => setFailed(true)}
           className="size-full object-cover"
           aria-label="Demonstração em vídeo do sinal de Libras"

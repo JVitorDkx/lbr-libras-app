@@ -9,6 +9,13 @@ backend/.pytest_cache/
 backend/.ruff_cache/
 backend/**/__pycache__/
 backend/**/*.py[cod]
+backend/data/*.db
+backend/data/*.db-*
+
+# Os arquivos reais de Libras podem ser grandes e devem ser publicados
+# por armazenamento próprio quando o protótipo entrar em produção.
+backend/static/media/signs/*
+!backend/static/media/signs/README.md
 
 # Editors and operating systems
 .idea/

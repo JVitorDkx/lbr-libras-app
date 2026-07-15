@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.models.game import (
+    AnswerAttemptSummary,
     AnswerRequest,
     AnswerResult,
     CompleteLevelResult,
@@ -46,6 +47,15 @@ def validate_answer(level_id: str, question_id: str, payload: AnswerRequest) -> 
 @router.get("/progress", response_model=PlayerProgress, summary="Consultar progresso do protótipo")
 def get_progress() -> PlayerProgress:
     return game_service.get_progress()
+
+
+@router.get(
+    "/progress/answers",
+    response_model=list[AnswerAttemptSummary],
+    summary="Consultar histórico de respostas do protótipo",
+)
+def get_answer_attempts() -> list[AnswerAttemptSummary]:
+    return game_service.list_answer_attempts()
 
 
 @router.post(

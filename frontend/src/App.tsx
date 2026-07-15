@@ -12,7 +12,7 @@ export default function App() {
   const [screen, setScreen] = useState<AppScreen>("menu");
   const [activeLevel, setActiveLevel] = useState<GameLevel | null>(null);
   const [awardedXp, setAwardedXp] = useState(0);
-  const { progress, complete } = usePlayerProgress();
+  const { progress, applyServerProgress } = usePlayerProgress();
 
   const startLevel = (level: GameLevel) => {
     setActiveLevel(level);
@@ -22,8 +22,8 @@ export default function App() {
   const finishLevel = (result: CompleteLevelResult) => {
     if (!activeLevel) return;
     const alreadyCompleted = progress.completedLevelIds.includes(activeLevel.id);
-    complete(activeLevel);
-      setAwardedXp(result.awarded_xp || (alreadyCompleted ? 0 : activeLevel.reward_xp));
+    applyServerProgress(result);
+    setAwardedXp(result.awarded_xp || (alreadyCompleted ? 0 : activeLevel.reward_xp));
     setScreen("complete");
   };
 
