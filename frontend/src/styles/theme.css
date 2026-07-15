@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/*
+ * Design system LBRLibras — Tailwind CSS v4
+ * Os tokens @theme geram utilitários como bg-app-card, text-brand-cyan
+ * e shadow-tactile-violet, mantendo o visual consistente entre as telas.
+ */
+@theme {
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Nunito", "Inter", "Segoe UI", system-ui, sans-serif;
+
+  --color-app: #0b0d12;
+  --color-app-card: #141820;
+  --color-app-elevated: #1a1f29;
+  --color-app-border: #2a303d;
+  --color-app-text: #f7f8fc;
+  --color-app-muted: #a4adbd;
+  --color-app-subtle: #6f7888;
+
+  --color-brand-violet: #6d4aff;
+  --color-brand-violet-light: #8b72ff;
+  --color-brand-violet-dark: #4a2fd6;
+  --color-brand-violet-glow: rgb(109 74 255 / 0.24);
+  --color-brand-cyan: #35d6c5;
+  --color-brand-amber: #ffc83d;
+  --color-brand-coral: #ff7a59;
+
+  --color-success: #42dc84;
+  --color-success-surface: #123522;
+  --color-danger: #ff5f6d;
+  --color-danger-surface: #3a171d;
+
+  --radius-card: 2rem;
+  --radius-control: 1rem;
+
+  --shadow-card: 0 24px 70px rgb(0 0 0 / 0.38);
+  --shadow-tactile-violet: 0 5px 0 #4a2fd6, 0 14px 30px rgb(109 74 255 / 0.24);
+  --shadow-tactile-violet-hover: 0 7px 0 #4a2fd6, 0 18px 38px rgb(109 74 255 / 0.32);
+
+  --ease-springy: cubic-bezier(0.2, 0.85, 0.32, 1.18);
+}
+
+:root {
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  background: var(--color-app);
+  color: var(--color-app-text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-app);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  color: white;
+  background: var(--color-brand-violet);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
