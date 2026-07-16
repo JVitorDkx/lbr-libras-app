@@ -32,13 +32,14 @@ O frontend ficará disponível em `http://localhost:5173`.
 ## Blocos do protótipo
 
 1. ✅ Fundação full stack e design system.
-2. ✅ Menu principal, trilha dinâmica, XP e desbloqueio local.
+2. ✅ Menu principal, XP e desbloqueio local.
 3. ✅ Área de jogo, feedback imediato, conclusão idempotente e +250 XP.
 4. ✅ SQLite, histórico de respostas e servidor de mídias reais.
+5. ✅ Menu autoral por categorias, perfil, estatísticas e conquistas persistentes.
 
 ## Progresso do protótipo
 
-O menu consulta `GET /api/game/levels` e aplica os pré-requisitos informados pela API. O Nível 1 carrega as questões por `GET /api/game/levels/{level_id}/questions`, valida cada escolha por `POST /api/game/levels/{level_id}/questions/{question_id}/answer` e registra a conclusão por `POST /api/game/levels/{level_id}/complete`.
+O menu consulta `GET /api/game/levels`, agrupa os tópicos em Princípios básicos, Alfabeto e Números e aplica os pré-requisitos informados pela API. O perfil e suas conquistas são carregados por `GET /api/game/profile`. O Nível 1 carrega as questões por `GET /api/game/levels/{level_id}/questions`, valida cada escolha por `POST /api/game/levels/{level_id}/questions/{question_id}/answer` e registra a conclusão por `POST /api/game/levels/{level_id}/complete`.
 
 O SQLite é a fonte principal de progresso e o `LocalStorage` funciona como cópia local de apoio. A conclusão é idempotente: repetir uma aula não concede XP duplicado. O histórico pode ser consultado em `GET /api/game/progress/answers`.
 
@@ -46,11 +47,70 @@ O SQLite é a fonte principal de progresso e o `LocalStorage` funciona como cóp
 
 | Tabela | Responsabilidade |
 | --- | --- |
-| `players` | Perfil, XP e dias de ofensiva. |
-| `levels` | Catálogo, ordem, recompensa e pré-requisito das fases. |
+| `players` | Perfil, XP, sequência, tempo jogado e estatísticas de aprendizagem. |
+| `levels` | Catálogo, categoria, ícone, ordem, recompensa e pré-requisito dos tópicos. |
 | `questions` | Pergunta, opções, gabarito e caminho da mídia. |
 | `player_level_progress` | Estado bloqueado, disponível ou concluído por usuário. |
 | `answer_attempts` | Alternativa escolhida, acerto/erro e data de cada resposta. |
+| `achievements` | Catálogo das conquistas, metas, unidades e identidade visual. |
+| `player_achievement_progress` | Valor atual e desbloqueio de cada conquista por usuário. |
+
+### Diagrama entidade-relacionamento
+
+```mermaid
+erDiagram
+    PLAYERS ||--o{ PLAYER_LEVEL_PROGRESS : possui
+    PLAYERS ||--o{ ANSWER_ATTEMPTS : responde
+    PLAYERS ||--o{ PLAYER_ACHIEVEMENT_PROGRESS : conquista
+    LEVELS ||--o{ QUESTIONS : contem
+    LEVELS ||--o{ PLAYER_LEVEL_PROGRESS : acompanha
+    QUESTIONS ||--o{ ANSWER_ATTEMPTS : registra
+    ACHIEVEMENTS ||--o{ PLAYER_ACHIEVEMENT_PROGRESS : mede
+
+    PLAYERS {
+        int id PK
+        string display_name
+        int xp
+        int streak_days
+        int level_number
+        int total_play_seconds
+        int signs_learned
+        int challenges_completed
+    }
+    LEVELS {
+        string id PK
+        string category
+        string icon_key
+        string prerequisite_level_id FK
+    }
+    QUESTIONS {
+        string id PK
+        string level_id FK
+        string media_url
+        json options
+    }
+    PLAYER_LEVEL_PROGRESS {
+        int player_id FK
+        string level_id FK
+        string status
+        int progress_percent
+    }
+    ANSWER_ATTEMPTS {
+        int player_id FK
+        string question_id FK
+        boolean is_correct
+    }
+    ACHIEVEMENTS {
+        string id PK
+        int target_value
+        string unit
+    }
+    PLAYER_ACHIEVEMENT_PROGRESS {
+        int player_id FK
+        string achievement_id FK
+        int current_value
+    }
+```
 
 O arquivo local é criado automaticamente em `backend/data/lbrlibras.db`. Reiniciar a API não apaga XP, desbloqueios ou respostas.
 

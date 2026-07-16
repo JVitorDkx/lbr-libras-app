@@ -6,6 +6,7 @@ from app.models.game import (
     AnswerResult,
     CompleteLevelResult,
     LevelSummary,
+    PlayerProfile,
     PlayerProgress,
     QuestionPublic,
 )
@@ -47,6 +48,14 @@ def validate_answer(level_id: str, question_id: str, payload: AnswerRequest) -> 
 @router.get("/progress", response_model=PlayerProgress, summary="Consultar progresso do protótipo")
 def get_progress() -> PlayerProgress:
     return game_service.get_progress()
+
+
+@router.get("/profile", response_model=PlayerProfile, summary="Consultar perfil e conquistas")
+def get_profile() -> PlayerProfile:
+    profile = game_service.get_profile()
+    if profile is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Jogador não encontrado")
+    return profile
 
 
 @router.get(

@@ -2,16 +2,26 @@ from datetime import datetime, timezone
 
 from sqlalchemy import delete, select
 
-from app.db.models import AnswerAttempt, Level, Player, PlayerLevelProgress, Question
+from app.db.models import (
+    Achievement,
+    AnswerAttempt,
+    Level,
+    Player,
+    PlayerAchievementProgress,
+    PlayerLevelProgress,
+    Question,
+)
 from app.db.session import SessionLocal
 from app.models.game import (
     AnswerAttemptSummary,
     AnswerResult,
+    AchievementSummary,
     CompleteLevelResult,
     LevelStatus,
     LevelSummary,
     MediaType,
     PlayerProgress,
+    PlayerProfile,
     QuestionPublic,
 )
 
@@ -24,7 +34,7 @@ class GameService:
         with SessionLocal() as session:
             levels = session.scalars(select(Level).order_by(Level.order)).all()
             progress_by_level = {
-                item.level_id: item.status
+                item.level_id: item
                 for item in session.scalars(
                     select(PlayerLevelProgress).where(
                         PlayerLevelProgress.player_id == DEFAULT_PLAYER_ID
@@ -39,10 +49,18 @@ class GameService:
                     description=level.description,
                     status=(
                         LevelStatus.AVAILABLE
-                        if progress_by_level.get(level.id) in {"available", "completed"}
+                        if progress_by_level.get(level.id)
+                        and progress_by_level[level.id].status in {"available", "completed"}
                         else LevelStatus.LOCKED
                     ),
                     accent=level.accent,
+                    category=level.category,
+                    icon_key=level.icon_key,
+                    progress_percent=(
+                        progress_by_level[level.id].progress_percent
+                        if level.id in progress_by_level
+                        else 0
+                    ),
                     reward_xp=level.reward_xp,
                     question_count=len(level.questions),
                     prerequisite_level_id=level.prerequisite_level_id,
@@ -55,9 +73,7 @@ class GameService:
             if session.get(Level, level_id) is None:
                 return None
             records = session.scalars(
-                select(Question)
-                .where(Question.level_id == level_id)
-                .order_by(Question.position)
+                select(Question).where(Question.level_id == level_id).order_by(Question.position)
             ).all()
             return [
                 QuestionPublic(
@@ -117,6 +133,51 @@ class GameService:
             return PlayerProgress(
                 completed_level_ids=sorted(completed),
                 xp=player.xp if player else 0,
+                streak_days=player.streak_days if player else 0,
+            )
+
+    def get_profile(self) -> PlayerProfile | None:
+        with SessionLocal() as session:
+            player = session.get(Player, DEFAULT_PLAYER_ID)
+            if player is None:
+                return None
+            rows = session.execute(
+                select(Achievement, PlayerAchievementProgress)
+                .join(
+                    PlayerAchievementProgress,
+                    PlayerAchievementProgress.achievement_id == Achievement.id,
+                )
+                .where(PlayerAchievementProgress.player_id == DEFAULT_PLAYER_ID)
+                .order_by(Achievement.order)
+            ).all()
+            achievements = [
+                AchievementSummary(
+                    id=achievement.id,
+                    title=achievement.title,
+                    description=achievement.description,
+                    icon_key=achievement.icon_key,
+                    accent=achievement.accent,
+                    current_value=progress.current_value,
+                    target_value=achievement.target_value,
+                    unit=achievement.unit,
+                    progress_percent=min(
+                        100, round(progress.current_value / achievement.target_value * 100)
+                    ),
+                )
+                for achievement, progress in rows
+            ]
+            return PlayerProfile(
+                display_name=player.display_name,
+                level_number=player.level_number,
+                xp=player.xp,
+                streak_days=player.streak_days,
+                total_play_seconds=player.total_play_seconds,
+                signs_learned=player.signs_learned,
+                challenges_completed=player.challenges_completed,
+                achievements_unlocked=player.achievements_unlocked,
+                achievements_total=player.achievements_total,
+                learning_progress_percent=min(100, round(player.signs_learned / 300 * 100)),
+                achievements=achievements,
             )
 
     def list_answer_attempts(self) -> list[AnswerAttemptSummary]:
@@ -153,6 +214,7 @@ class GameService:
             if progress.status != "completed":
                 awarded_xp = level.reward_xp
                 progress.status = "completed"
+                progress.progress_percent = 100
                 progress.xp_awarded = awarded_xp
                 progress.completed_at = datetime.now(timezone.utc)
                 player.xp += awarded_xp
@@ -179,6 +241,7 @@ class GameService:
             return CompleteLevelResult(
                 completed_level_ids=sorted(completed),
                 xp=player.xp,
+                streak_days=player.streak_days,
                 awarded_xp=awarded_xp,
             )
 
@@ -196,7 +259,12 @@ class GameService:
                 )
             ).all()
             for progress in progress_items:
-                progress.status = "available" if progress.level_id == "cumprimentos" else "locked"
+                level = session.get(Level, progress.level_id)
+                progress.status = (
+                    "available"
+                    if level is not None and level.prerequisite_level_id is None
+                    else "locked"
+                )
                 progress.xp_awarded = 0
                 progress.completed_at = None
             session.commit()

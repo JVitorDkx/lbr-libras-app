@@ -3,10 +3,11 @@ import { useState } from "react";
 import { GameScreen } from "./components/game/GameScreen";
 import { LevelComplete } from "./components/game/LevelComplete";
 import { MenuScreen } from "./components/MenuScreen";
+import { ProfileScreen } from "./components/ProfileScreen";
 import { usePlayerProgress } from "./hooks/usePlayerProgress";
 import type { CompleteLevelResult, GameLevel } from "./types/game";
 
-type AppScreen = "menu" | "game" | "complete";
+type AppScreen = "menu" | "profile" | "game" | "complete";
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("menu");
@@ -35,5 +36,9 @@ export default function App() {
     return <LevelComplete awardedXp={awardedXp} streakDays={progress.streakDays} onReturn={() => setScreen("menu")} />;
   }
 
-  return <MenuScreen progress={progress} onPlay={startLevel} />;
+  if (screen === "profile") {
+    return <ProfileScreen onNavigate={setScreen} />;
+  }
+
+  return <MenuScreen progress={progress} onPlay={startLevel} onNavigate={setScreen} />;
 }

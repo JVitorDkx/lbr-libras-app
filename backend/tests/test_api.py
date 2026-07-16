@@ -25,12 +25,15 @@ def test_levels_begin_with_greetings_available() -> None:
 
     assert response.status_code == 200
     levels = response.json()
+    by_id = {level["id"]: level for level in levels}
     assert levels[0]["id"] == "cumprimentos"
-    assert levels[0]["status"] == "available"
-    assert levels[1]["status"] == "locked"
-    assert levels[0]["prerequisite_level_id"] is None
-    assert levels[1]["prerequisite_level_id"] == "cumprimentos"
-    assert levels[2]["prerequisite_level_id"] == "alfabeto"
+    assert by_id["cumprimentos"]["status"] == "available"
+    assert by_id["expressoes"]["status"] == "available"
+    assert by_id["alfabeto"]["status"] == "locked"
+    assert by_id["cumprimentos"]["category"] == "Princípios básicos"
+    assert by_id["cumprimentos"]["progress_percent"] == 80
+    assert by_id["alfabeto"]["prerequisite_level_id"] == "cumprimentos"
+    assert by_id["numeros"]["prerequisite_level_id"] == "alfabeto"
 
 
 def test_answer_validation_does_not_expose_answer_in_question() -> None:
@@ -72,7 +75,23 @@ def test_level_completion_awards_xp_only_once() -> None:
     assert repeated.json()["xp"] == 250
 
     levels = client.get("/api/game/levels").json()
-    assert levels[1]["status"] == "available"
+    by_id = {level["id"]: level for level in levels}
+    assert by_id["alfabeto"]["status"] == "available"
+    assert by_id["cumprimentos"]["progress_percent"] == 100
+
+
+def test_profile_reads_statistics_and_achievements_from_sqlite() -> None:
+    response = client.get("/api/game/profile")
+
+    assert response.status_code == 200
+    profile = response.json()
+    assert profile["display_name"] == "JVitor"
+    assert profile["level_number"] == 14
+    assert profile["total_play_seconds"] == 115_200
+    assert profile["signs_learned"] == 248
+    assert profile["challenges_completed"] == 56
+    assert len(profile["achievements"]) == 4
+    assert profile["achievements"][0]["title"] == "Mestre do Alfabeto"
 
 
 def test_progress_survives_a_new_service_instance() -> None:

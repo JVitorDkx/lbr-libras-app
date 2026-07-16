@@ -24,6 +24,7 @@ export function usePlayerProgress() {
           ...current,
           completedLevelIds: serverProgress.completed_level_ids,
           xp: serverProgress.xp,
+          streakDays: serverProgress.streak_days,
         }));
       })
       .catch(() => undefined);
@@ -37,6 +38,7 @@ export function usePlayerProgress() {
         ...current,
         completedLevelIds: serverProgress.completed_level_ids,
         xp: serverProgress.xp,
+        streakDays: serverProgress.streak_days,
       })),
     reset: () => setProgress(initialProgress),
   };

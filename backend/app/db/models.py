@@ -21,6 +21,12 @@ class Player(Base):
     display_name: Mapped[str] = mapped_column(String(80), default="João")
     xp: Mapped[int] = mapped_column(Integer, default=0)
     streak_days: Mapped[int] = mapped_column(Integer, default=3)
+    level_number: Mapped[int] = mapped_column(Integer, default=14)
+    total_play_seconds: Mapped[int] = mapped_column(Integer, default=115_200)
+    signs_learned: Mapped[int] = mapped_column(Integer, default=248)
+    challenges_completed: Mapped[int] = mapped_column(Integer, default=56)
+    achievements_unlocked: Mapped[int] = mapped_column(Integer, default=12)
+    achievements_total: Mapped[int] = mapped_column(Integer, default=30)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, onupdate=utc_now
@@ -30,6 +36,9 @@ class Player(Base):
         back_populates="player", cascade="all, delete-orphan"
     )
     answer_attempts: Mapped[list[AnswerAttempt]] = relationship(
+        back_populates="player", cascade="all, delete-orphan"
+    )
+    achievement_progress: Mapped[list[PlayerAchievementProgress]] = relationship(
         back_populates="player", cascade="all, delete-orphan"
     )
 
@@ -42,6 +51,8 @@ class Level(Base):
     title: Mapped[str] = mapped_column(String(80))
     description: Mapped[str] = mapped_column(String(200))
     accent: Mapped[str] = mapped_column(String(20))
+    category: Mapped[str] = mapped_column(String(80), default="Princípios básicos")
+    icon_key: Mapped[str] = mapped_column(String(30), default="hands")
     reward_xp: Mapped[int] = mapped_column(Integer, default=0)
     prerequisite_level_id: Mapped[str | None] = mapped_column(
         ForeignKey("levels.id"), nullable=True
@@ -82,6 +93,7 @@ class PlayerLevelProgress(Base):
     level_id: Mapped[str] = mapped_column(ForeignKey("levels.id"), index=True)
     status: Mapped[str] = mapped_column(String(20), default="locked")
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+    progress_percent: Mapped[int] = mapped_column(Integer, default=0)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     player: Mapped[Player] = relationship(back_populates="level_progress")
@@ -100,3 +112,34 @@ class AnswerAttempt(Base):
 
     player: Mapped[Player] = relationship(back_populates="answer_attempts")
     question: Mapped[Question] = relationship(back_populates="answer_attempts")
+
+
+class Achievement(Base):
+    __tablename__ = "achievements"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    title: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(String(160))
+    icon_key: Mapped[str] = mapped_column(String(30))
+    accent: Mapped[str] = mapped_column(String(20))
+    target_value: Mapped[int] = mapped_column(Integer)
+    unit: Mapped[str] = mapped_column(String(30))
+    order: Mapped[int] = mapped_column(Integer, unique=True)
+
+    player_progress: Mapped[list[PlayerAchievementProgress]] = relationship(
+        back_populates="achievement", cascade="all, delete-orphan"
+    )
+
+
+class PlayerAchievementProgress(Base):
+    __tablename__ = "player_achievement_progress"
+    __table_args__ = (UniqueConstraint("player_id", "achievement_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"), index=True)
+    achievement_id: Mapped[str] = mapped_column(ForeignKey("achievements.id"), index=True)
+    current_value: Mapped[int] = mapped_column(Integer, default=0)
+    unlocked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    player: Mapped[Player] = relationship(back_populates="achievement_progress")
+    achievement: Mapped[Achievement] = relationship(back_populates="player_progress")
