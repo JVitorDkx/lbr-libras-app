@@ -23,9 +23,3 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 
   return response.json() as Promise<T>;
 }
-
-export function resolveMediaUrl(path: string): string {
-  if (/^https?:\/\//.test(path)) return path;
-  const apiOrigin = API_URL.replace(/\/api\/?$/, "");
-  return `${apiOrigin}${path.startsWith("/") ? path : `/${path}`}`;
-}

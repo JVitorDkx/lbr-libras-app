@@ -9,12 +9,6 @@ class LevelStatus(StrEnum):
     LOCKED = "locked"
 
 
-class MediaType(StrEnum):
-    IMAGE = "image"
-    GIF = "gif"
-    VIDEO = "video"
-
-
 class LevelSummary(BaseModel):
     id: str
     order: int
@@ -33,8 +27,7 @@ class LevelSummary(BaseModel):
 class QuestionPublic(BaseModel):
     id: str
     prompt: str
-    media_type: MediaType
-    media_url: str
+    avatar_phrase: str
     options: list[str]
 
 

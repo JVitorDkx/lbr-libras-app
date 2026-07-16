@@ -12,7 +12,27 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <div id="lbrlibras-vlibras-root" class="lbr-vlibras-widget-disabled">
+      <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+          <div class="vw-plugin-top-wrapper"></div>
+        </div>
+      </div>
+    </div>
+
+    <script
+      id="lbrlibras-vlibras-script"
+      src="https://vlibras.gov.br/app/vlibras-plugin.js"
+    ></script>
+    <script>
+      if (window.VLibras?.Widget) {
+        window.__lbrlibrasVLibrasWidget = new window.VLibras.Widget(
+          "https://vlibras.gov.br/app",
+        );
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

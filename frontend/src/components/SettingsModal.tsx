@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Accessibility, Info, RotateCcw, Settings, Volume2, X } from "lucide-react";
+import { Info, RotateCcw, Settings, Volume2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -40,7 +40,6 @@ export function SettingsModal({ open, settings, resetting, resetError, onChange,
 
             <div className="space-y-2 p-4">
               <SettingToggle icon={<Volume2 className="size-5" />} title="Sons e efeitos" description="Feedback sonoro de acertos e erros" checked={settings.soundsEnabled} onChange={(value) => onChange("soundsEnabled", value)} />
-              <SettingToggle icon={<Accessibility className="size-5" />} title="Acessibilidade: VLibras" description="Tradutor oficial disponível na tela" checked={settings.vlibrasEnabled} onChange={(value) => onChange("vlibrasEnabled", value)} />
 
               <div className="mt-4 rounded-2xl border border-red-400/15 bg-red-400/[0.04] p-4">
                 <div className="flex gap-3"><RotateCcw className="mt-0.5 size-5 shrink-0 text-red-400" /><div><h2 className="text-sm font-extrabold">Resetar progresso</h2><p className="mt-1 text-xs leading-5 text-[#929aa6]">Zera XP, fases, estatísticas, respostas e conquistas neste protótipo.</p></div></div>

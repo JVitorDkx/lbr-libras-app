@@ -41,6 +41,7 @@ def test_answer_validation_does_not_expose_answer_in_question() -> None:
     question = questions_response.json()[0]
 
     assert "correct_answer" not in question
+    assert question["avatar_phrase"] == "Olá"
 
     answer_response = client.post(
         "/api/game/levels/cumprimentos/questions/ola/answer",
@@ -55,13 +56,25 @@ def test_greetings_level_has_four_questions() -> None:
     response = client.get("/api/game/levels/cumprimentos/questions")
 
     assert response.status_code == 200
-    assert [question["id"] for question in response.json()] == [
+    questions = response.json()
+    assert [question["id"] for question in questions] == [
         "ola",
         "bom-dia",
         "boa-tarde",
         "tchau",
     ]
-    assert response.json()[0]["media_url"] == "/static/media/signs/ola.mp4"
+    assert [question["avatar_phrase"] for question in questions] == [
+        "Olá",
+        "Bom dia",
+        "Boa tarde",
+        "Tchau",
+    ]
+    assert all(
+        question["avatar_phrase"] in question["options"]
+        for question in questions
+    )
+    assert "media_url" not in questions[0]
+    assert "media_type" not in questions[0]
 
 
 def test_level_completion_awards_xp_only_once() -> None:

@@ -19,7 +19,6 @@ from app.models.game import (
     CompleteLevelResult,
     LevelStatus,
     LevelSummary,
-    MediaType,
     PlayerProgress,
     PlayerProfile,
     QuestionPublic,
@@ -79,8 +78,9 @@ class GameService:
                 QuestionPublic(
                     id=question.id,
                     prompt=question.prompt,
-                    media_type=MediaType(question.media_type),
-                    media_url=question.media_url,
+                    # O avatar sempre recebe a resposta correta persistida no
+                    # SQLite, nunca o enunciado ou uma alternativa selecionada.
+                    avatar_phrase=question.correct_answer.strip(),
                     options=question.options,
                 )
                 for question in records

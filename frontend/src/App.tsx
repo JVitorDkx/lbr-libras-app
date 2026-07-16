@@ -5,7 +5,6 @@ import { LevelComplete } from "./components/game/LevelComplete";
 import { MenuScreen } from "./components/MenuScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { SettingsModal } from "./components/SettingsModal";
-import { VLibrasWidget } from "./components/VLibrasWidget";
 import { useAppSettings } from "./hooks/useAppSettings";
 import { usePlayerProgress } from "./hooks/usePlayerProgress";
 import { apiPost } from "./lib/api";
@@ -73,7 +72,6 @@ export default function App() {
   return (
     <>
       {content}
-      <VLibrasWidget enabled={settings.vlibrasEnabled} />
       <SettingsModal open={settingsOpen} settings={settings} resetting={resetting} resetError={resetError} onChange={updateSetting} onReset={resetProgress} onClose={closeSettings} />
     </>
   );

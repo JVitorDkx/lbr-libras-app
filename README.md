@@ -49,7 +49,7 @@ O SQLite é a fonte principal de progresso e o `LocalStorage` funciona como cóp
 | --- | --- |
 | `players` | Perfil, XP, sequência, tempo jogado e estatísticas de aprendizagem. |
 | `levels` | Catálogo, categoria, ícone, ordem, recompensa e pré-requisito dos tópicos. |
-| `questions` | Pergunta, opções, gabarito e caminho da mídia. |
+| `questions` | Pergunta, opções, gabarito e frase enviada ao avatar. |
 | `player_level_progress` | Estado bloqueado, disponível ou concluído por usuário. |
 | `answer_attempts` | Alternativa escolhida, acerto/erro e data de cada resposta. |
 | `achievements` | Catálogo das conquistas, metas, unidades e identidade visual. |
@@ -86,7 +86,7 @@ erDiagram
     QUESTIONS {
         string id PK
         string level_id FK
-        string media_url
+        string correct_answer
         json options
     }
     PLAYER_LEVEL_PROGRESS {
@@ -114,17 +114,36 @@ erDiagram
 
 O arquivo local é criado automaticamente em `backend/data/lbrlibras.db`. Reiniciar a API não apaga XP, desbloqueios ou respostas.
 
-## Mídia de Libras
+## Integração técnica com o VLibras
 
-O componente aceita MP4, GIF, WebP e outras imagens. O FastAPI publica `backend/static/media/` em `/static/media/`. Os nomes esperados para o Nível 1 estão descritos em `backend/static/media/signs/README.md`.
+### Solução do conflito entre React e o script externo
 
-Enquanto os sinais reais não forem gravados e validados por um profissional de Libras, o jogo exibe um estado visual de demonstração claramente identificado, evitando apresentar gestos inventados como conteúdo pedagógico.
+O VLibras foi originalmente projetado para controlar diretamente elementos do DOM. Já o React mantém sua própria árvore virtual e pode montar, desmontar ou recriar componentes durante mudanças de tela e também durante as verificações do `StrictMode`. Criar a estrutura do widget dentro de um componente React fazia o script externo conservar referências para elementos que já haviam sido removidos, causando instâncias duplicadas, falhas de inicialização e perda do player.
 
-### VLibras e Hand Talk
+Para evitar esse conflito, a raiz oficial do VLibras foi declarada uma única vez no `frontend/index.html`:
 
-O VLibras oferece widget e serviços públicos de tradução automática. Entretanto, o próprio [VLibras Vídeo](https://video.vlibras.gov.br/) informa que traduções automáticas não são autorizadas para cursos e aulas e recomenda intérpretes humanos nesses contextos. Por isso, o avatar não é usado como gabarito pedagógico deste protótipo sem revisão humana.
+```html
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+```
 
-A [Hand Talk](https://docs.handtalk.me/docs/introducao/) disponibiliza seu tradutor de sites por plugin e token. Sua Customer API pública documentada fornece métricas de uso do plugin, não geração de mídias. Essa integração é tratada como recurso de acessibilidade separado, não como banco aberto de vídeos das questões.
+Essa estrutura é estática e existe fora da raiz controlada pelo React. A aplicação inicializa somente uma instância global de `window.VLibras.Widget`. Quando uma pergunta é aberta, o React não recria o widget: o gerenciador `vlibrasGamePlayer.ts` reutiliza a referência do DOM real e reposiciona o mesmo elemento `[vw]` dentro do card `lbr-vlibras-stage`. Ao sair da partida, a estrutura retorna à sua raiz técnica oculta. Essa estratégia mantém a hierarquia interna esperada pelo player Unity e evita conflitos entre o ciclo de vida do React e o script oficial.
+
+A reprodução também é sincronizada com o carregamento assíncrono do player. O código aguarda `window.plugin.player`, interrompe a apresentação inicial do avatar, espera o evento `stop:welcome` e então envia exclusivamente a resposta correta da questão para `player.translate(...)`. Nas perguntas seguintes, a animação anterior é interrompida antes da nova tradução.
+
+### Usabilidade e enquadramento do avatar
+
+A interface flutuante padrão do widget não faz parte da navegação do jogo. Os elementos `[vw-access-button]`, `.vp-access-button`, `.vp-pop-up` e `.vw-links` são ocultados globalmente com `display: none !important`. A captura de interação do widget também permanece desativada, evitando o botão intermediário “Interagir” e permitindo que o estudante utilize somente as alternativas criadas pela aplicação.
+
+Dentro da fase, apenas o player é exibido. O contêiner usa proporção `4 / 3`, centralização vertical e margens de segurança de `16px` nas laterais. O canvas respeita `object-fit: contain`, não utiliza ampliações negativas e fica limitado pelas bordas arredondadas do card. Esse enquadramento preserva espaço para a cabeça, os braços e as mãos em sinais com movimentos amplos, sem deformar ou deixar o avatar vazar sobre o restante da interface.
+
+O FastAPI fornece `avatar_phrase` diretamente a partir de `Question.correct_answer` armazenado no SQLite. Assim, o avatar representa sempre o gabarito da pergunta atual, enquanto as alternativas permanecem sob responsabilidade da interface React.
+
+> **Nota pedagógica:** traduções automáticas devem ser revisadas por uma pessoa especialista em Libras antes do uso do protótipo como material educacional definitivo.
 
 ## Autoria e direitos
 

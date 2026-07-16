@@ -78,6 +78,163 @@ button {
   background: var(--color-brand-violet);
 }
 
+/*
+ * Player VLibras integrado à área do jogo.
+ * A interface flutuante oficial permanece oculta; somente o avatar incorporado
+ * ao palco da pergunta é apresentado ao usuário.
+ */
+.lbr-vlibras-widget-disabled {
+  display: none !important;
+}
+
+[vw-access-button],
+.vp-access-button,
+.vp-pop-up,
+.vw-links {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.lbr-vlibras-stage {
+  isolation: isolate;
+  contain: layout paint;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #eef0f2;
+}
+
+.lbr-vlibras-stage > div[vw].enabled,
+.lbr-vlibras-stage > div[vw].enabled.active {
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  translate: none !important;
+  float: none !important;
+  overflow: hidden !important;
+  border-radius: inherit;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+}
+
+.lbr-vlibras-stage > [vw] > [vw-access-button] {
+  display: none !important;
+}
+
+.lbr-vlibras-stage [vw-plugin-wrapper].lbr-vlibras-player-shell {
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform: none !important;
+  clip-path: inset(0 round 1.7rem);
+  overflow: hidden !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: none;
+  z-index: 1 !important;
+}
+
+.lbr-vlibras-stage [vw-plugin-wrapper] .vw-plugin-top-wrapper,
+.lbr-vlibras-stage [vw-plugin-wrapper] [vp] {
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #eef0f2 !important;
+  transform: none !important;
+}
+
+.lbr-vlibras-stage [vp] #gameContainer {
+  display: block !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: calc(50% + 0.375rem) !important;
+  width: calc(100% - 2rem) !important;
+  height: auto !important;
+  max-width: calc(100% - 2rem) !important;
+  max-height: calc(100% - 1.5rem) !important;
+  aspect-ratio: 4 / 3;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center center;
+  overflow: hidden !important;
+  background: #eef0f2 !important;
+}
+
+.lbr-vlibras-stage [vp] #gameContainer canvas,
+.lbr-vlibras-stage [vp] canvas#gameContainer {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 4 / 3;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #eef0f2 !important;
+}
+
+.lbr-vlibras-stage [vp-controls],
+.lbr-vlibras-stage [vp-box],
+.lbr-vlibras-stage [vp-message-box],
+.lbr-vlibras-stage [vp-settings],
+.lbr-vlibras-stage [vp-settings-btn],
+.lbr-vlibras-stage [vp-dictionary],
+.lbr-vlibras-stage [vp-info-screen],
+.lbr-vlibras-stage [vp-translator-screen],
+.lbr-vlibras-stage [vp-more-options-screen],
+.lbr-vlibras-stage [vp-emotions-tooltip],
+.lbr-vlibras-stage [vp-main-guide-screen],
+.lbr-vlibras-stage [vp-aux-controls],
+.lbr-vlibras-stage [vp-click-blocker],
+.lbr-vlibras-stage [vp-rate-button],
+.lbr-vlibras-stage [vp-rate-box],
+.lbr-vlibras-stage [vp-suggestion-button],
+.lbr-vlibras-stage [vp-suggestion-screen],
+.lbr-vlibras-stage [vp-change-avatar],
+.lbr-vlibras-stage .vpw-controls,
+.lbr-vlibras-stage .vpw-box,
+.lbr-vlibras-stage .vpw-message-box,
+.lbr-vlibras-stage .vpw-settings,
+.lbr-vlibras-stage .vpw-dictionary,
+.lbr-vlibras-stage .vpw-info-screen,
+.lbr-vlibras-stage .vpw-rate-button,
+.lbr-vlibras-stage .vpw-rate-box,
+.lbr-vlibras-stage .vpw-suggestion-button,
+.lbr-vlibras-stage .vpw-suggestion-screen,
+.lbr-vlibras-stage .vpw-change-avatar {
+  display: none !important;
+}
+
+.lbr-vlibras-stage [vp] span[vp-click-blocker].vp-enabled,
+.lbr-vlibras-stage .vp-guide-container,
+.lbr-vlibras-stage .vpw-skip-welcome-message {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -88,4 +245,3 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
-

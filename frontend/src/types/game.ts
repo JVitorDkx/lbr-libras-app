@@ -20,8 +20,7 @@ export type LevelViewStatus = "completed" | "available" | "locked";
 export interface GameQuestion {
   id: string;
   prompt: string;
-  media_type: "image" | "gif" | "video";
-  media_url: string;
+  avatar_phrase: string;
   options: string[];
 }
 
