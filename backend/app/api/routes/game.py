@@ -50,6 +50,15 @@ def get_progress() -> PlayerProgress:
     return game_service.get_progress()
 
 
+@router.post(
+    "/progress/reset",
+    response_model=PlayerProgress,
+    summary="Resetar todo o progresso do jogador",
+)
+def reset_progress() -> PlayerProgress:
+    return game_service.reset_and_get_progress()
+
+
 @router.get("/profile", response_model=PlayerProfile, summary="Consultar perfil e conquistas")
 def get_profile() -> PlayerProfile:
     profile = game_service.get_profile()

@@ -6,25 +6,30 @@ import { apiGet } from "../lib/api";
 import type { Achievement, PlayerProfile } from "../types/game";
 import { AppNavigation, type MainTab } from "./AppNavigation";
 
-interface ProfileScreenProps { onNavigate: (tab: MainTab) => void }
+interface ProfileScreenProps { onNavigate: (tab: MainTab) => void; onOpenSettings: () => void }
 
 const colors = { violet: "#6042ff", cyan: "#38d6c5", coral: "#ff8b61", indigo: "#4f46e5", teal: "#2aa59e", amber: "#ffe000" };
 const achievementIcons = { trophy: Trophy, medal: Medal, badge: Award, star: Star };
 
-export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
+export function ProfileScreen({ onNavigate, onOpenSettings }: ProfileScreenProps) {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    apiGet<PlayerProfile>("/game/profile", controller.signal).then(setProfile).catch(() => setFailed(true));
+    setFailed(false);
+    apiGet<PlayerProfile>("/game/profile", controller.signal)
+      .then(setProfile)
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) setFailed(true);
+      });
     return () => controller.abort();
   }, []);
 
   return (
     <main className="min-h-dvh bg-[#0b0d12] text-white">
       <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/[0.03] shadow-2xl">
-        {profile ? <ProfileHeader profile={profile} /> : <div className="h-[7.5rem] animate-pulse bg-white/[0.02]" />}
+        {profile ? <ProfileHeader profile={profile} onOpenSettings={onOpenSettings} /> : <div className="h-[7.5rem] animate-pulse bg-white/[0.02]" />}
         <AppNavigation active="profile" onNavigate={onNavigate} />
         {failed && <div className="m-5 rounded-2xl border border-red-400/20 p-6 text-center"><WifiOff className="mx-auto text-red-400" /><p className="mt-3 font-bold">Não foi possível carregar o perfil.</p></div>}
         {profile && (
@@ -46,8 +51,8 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
   );
 }
 
-function ProfileHeader({ profile }: { profile: PlayerProfile }) {
-  return <header className="flex items-center gap-3 px-5 py-6"><div className="size-14 rounded-full bg-[#194446] ring-2 ring-[#6042ff]" /><div className="min-w-0 flex-1"><p className="font-display text-lg font-black">{profile.display_name}</p><div className="mt-2 flex items-center gap-2"><span className="rounded-lg bg-[#6042ff] px-2 py-1 text-[10px] font-black">Level {profile.level_number}</span><span className="text-[11px] text-[#929aa6]">• {profile.xp.toLocaleString("pt-BR")} XP</span></div></div><button type="button" aria-label="Configurações" className="grid size-10 place-items-center rounded-full hover:bg-white/5"><Settings className="size-5" /></button></header>;
+function ProfileHeader({ profile, onOpenSettings }: { profile: PlayerProfile; onOpenSettings: () => void }) {
+  return <header className="flex items-center gap-3 px-5 py-6"><div className="size-14 rounded-full bg-[#194446] ring-2 ring-[#6042ff]" /><div className="min-w-0 flex-1"><p className="font-display text-lg font-black">{profile.display_name}</p><div className="mt-2 flex items-center gap-2"><span className="rounded-lg bg-[#6042ff] px-2 py-1 text-[10px] font-black">Level {profile.level_number}</span><span className="text-[11px] text-[#929aa6]">• {profile.xp.toLocaleString("pt-BR")} XP</span></div></div><button type="button" onClick={onOpenSettings} aria-label="Abrir configurações" className="grid size-10 place-items-center rounded-full hover:bg-white/5"><Settings className="size-5" /></button></header>;
 }
 
 function LearningProgress({ profile }: { profile: PlayerProfile }) {

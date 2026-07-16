@@ -3,6 +3,7 @@ import { Eye, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { apiGet, apiPost } from "../../lib/api";
+import { playFeedbackTone } from "../../lib/sound";
 import type { AnswerResult, CompleteLevelResult, GameLevel, GameQuestion } from "../../types/game";
 import { AnswerGrid } from "./AnswerGrid";
 import { FeedbackSheet } from "./FeedbackSheet";
@@ -12,9 +13,10 @@ interface GameScreenProps {
   level: GameLevel;
   onExit: () => void;
   onComplete: (result: CompleteLevelResult) => void;
+  soundsEnabled: boolean;
 }
 
-export function GameScreen({ level, onExit, onComplete }: GameScreenProps) {
+export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScreenProps) {
   const [questions, setQuestions] = useState<GameQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export function GameScreen({ level, onExit, onComplete }: GameScreenProps) {
         { answer },
       );
       setResult(answerResult);
+      playFeedbackTone(answerResult.correct, soundsEnabled);
     } catch {
       setSelectedAnswer(null);
     } finally {

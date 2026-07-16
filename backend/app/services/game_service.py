@@ -250,6 +250,12 @@ class GameService:
             player = session.get(Player, DEFAULT_PLAYER_ID)
             if player is not None:
                 player.xp = 0
+                player.streak_days = 0
+                player.level_number = 1
+                player.total_play_seconds = 0
+                player.signs_learned = 0
+                player.challenges_completed = 0
+                player.achievements_unlocked = 0
             session.execute(
                 delete(AnswerAttempt).where(AnswerAttempt.player_id == DEFAULT_PLAYER_ID)
             )
@@ -266,8 +272,22 @@ class GameService:
                     else "locked"
                 )
                 progress.xp_awarded = 0
+                progress.progress_percent = 0
                 progress.completed_at = None
+
+            achievement_items = session.scalars(
+                select(PlayerAchievementProgress).where(
+                    PlayerAchievementProgress.player_id == DEFAULT_PLAYER_ID
+                )
+            ).all()
+            for achievement_progress in achievement_items:
+                achievement_progress.current_value = 0
+                achievement_progress.unlocked_at = None
             session.commit()
+
+    def reset_and_get_progress(self) -> PlayerProgress:
+        self.reset_progress()
+        return self.get_progress()
 
 
 game_service = GameService()

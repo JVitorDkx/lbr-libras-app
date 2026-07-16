@@ -14,11 +14,12 @@ interface MenuScreenProps {
   progress: PlayerProgress;
   onPlay: (level: GameLevel) => void;
   onNavigate: (tab: MainTab) => void;
+  onOpenSettings: () => void;
 }
 
 interface Notice { title: string; message: string }
 
-export function MenuScreen({ progress, onPlay, onNavigate }: MenuScreenProps) {
+export function MenuScreen({ progress, onPlay, onNavigate, onOpenSettings }: MenuScreenProps) {
   const [levels, setLevels] = useState<GameLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -60,7 +61,7 @@ export function MenuScreen({ progress, onPlay, onNavigate }: MenuScreenProps) {
   return (
     <main className="min-h-dvh bg-[#0b0d12] text-white">
       <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/[0.03] bg-[#0b0d12] shadow-2xl">
-        <MenuHeader xp={progress.xp} streakDays={progress.streakDays} />
+        <MenuHeader xp={progress.xp} streakDays={progress.streakDays} onOpenSettings={onOpenSettings} />
         <AppNavigation active="menu" onNavigate={onNavigate} />
 
         <div className="px-5 pb-16 pt-10">
@@ -75,11 +76,11 @@ export function MenuScreen({ progress, onPlay, onNavigate }: MenuScreenProps) {
           {!loading && !loadError && categories.map(([category, items], categoryIndex) => (
             <motion.section key={category} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: categoryIndex * 0.12 }} className="mb-14 last:mb-3">
               <h1 className="mb-8 text-center font-display text-[1.35rem] font-black tracking-tight">{category}</h1>
-              <div className="grid grid-cols-2 gap-x-10 gap-y-9">
+              <div className="mx-auto grid w-full max-w-[20rem] grid-cols-2 justify-items-center gap-x-10 gap-y-9">
                 {items.map((level, index) => {
                   const status = getLevelStatus(level, progress);
                   return (
-                    <div key={level.id} className={items.length === 1 ? "col-span-2" : ""}>
+                    <div key={level.id} className={`flex w-full justify-center ${items.length === 1 ? "col-span-2" : ""}`}>
                       <TopicCircle level={level} status={status} index={categoryIndex * 2 + index} onSelect={() => selectLevel(level, status)} />
                     </div>
                   );

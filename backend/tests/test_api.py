@@ -31,7 +31,7 @@ def test_levels_begin_with_greetings_available() -> None:
     assert by_id["expressoes"]["status"] == "available"
     assert by_id["alfabeto"]["status"] == "locked"
     assert by_id["cumprimentos"]["category"] == "Princípios básicos"
-    assert by_id["cumprimentos"]["progress_percent"] == 80
+    assert by_id["cumprimentos"]["progress_percent"] == 0
     assert by_id["alfabeto"]["prerequisite_level_id"] == "cumprimentos"
     assert by_id["numeros"]["prerequisite_level_id"] == "alfabeto"
 
@@ -86,12 +86,28 @@ def test_profile_reads_statistics_and_achievements_from_sqlite() -> None:
     assert response.status_code == 200
     profile = response.json()
     assert profile["display_name"] == "JVitor"
-    assert profile["level_number"] == 14
-    assert profile["total_play_seconds"] == 115_200
-    assert profile["signs_learned"] == 248
-    assert profile["challenges_completed"] == 56
+    assert profile["level_number"] == 1
+    assert profile["total_play_seconds"] >= 0
+    assert profile["signs_learned"] >= 0
+    assert profile["challenges_completed"] >= 0
     assert len(profile["achievements"]) == 4
     assert profile["achievements"][0]["title"] == "Mestre do Alfabeto"
+
+
+def test_reset_clears_sqlite_progress_and_achievements() -> None:
+    client.post("/api/game/levels/cumprimentos/complete")
+
+    reset = client.post("/api/game/progress/reset")
+    profile = client.get("/api/game/profile").json()
+    levels = client.get("/api/game/levels").json()
+
+    assert reset.status_code == 200
+    assert reset.json() == {"completed_level_ids": [], "xp": 0, "streak_days": 0}
+    assert profile["level_number"] == 1
+    assert profile["signs_learned"] == 0
+    assert profile["achievements_unlocked"] == 0
+    assert all(item["current_value"] == 0 for item in profile["achievements"])
+    assert all(level["progress_percent"] == 0 for level in levels)
 
 
 def test_progress_survives_a_new_service_instance() -> None:

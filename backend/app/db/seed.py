@@ -129,18 +129,20 @@ def seed_database(session: Session) -> None:
 
     player = session.get(Player, 1)
     if player is None:
-        player = Player(id=1, display_name="JVitor", xp=7_450, streak_days=15)
+        player = Player(
+            id=1,
+            display_name="JVitor",
+            xp=7_450,
+            streak_days=15,
+            level_number=14,
+            total_play_seconds=115_200,
+            signs_learned=248,
+            challenges_completed=56,
+            achievements_unlocked=12,
+            achievements_total=30,
+        )
         session.add(player)
         session.flush()
-    player.display_name = "JVitor"
-    player.xp = max(player.xp, 7_450)
-    player.streak_days = max(player.streak_days, 15)
-    player.level_number = 14
-    player.total_play_seconds = 115_200
-    player.signs_learned = 248
-    player.challenges_completed = 56
-    player.achievements_unlocked = 12
-    player.achievements_total = 30
 
     progress_by_level = {
         item.level_id: item
@@ -160,8 +162,6 @@ def seed_database(session: Session) -> None:
             session.add(progress)
         elif progress.status == "completed":
             progress.progress_percent = 100
-        elif progress.progress_percent == 0:
-            progress.progress_percent = source["initial_progress"]
 
     for (
         achievement_id,
@@ -201,7 +201,4 @@ def seed_database(session: Session) -> None:
                     current_value=current,
                 )
             )
-        else:
-            progress.current_value = current
-
     session.commit()
