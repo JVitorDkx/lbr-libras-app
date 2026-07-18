@@ -61,7 +61,7 @@ export function MenuScreen({ progress, onPlay, onNavigate, onOpenSettings }: Men
   return (
     <main className="min-h-dvh bg-[#0b0d12] text-white">
       <div className="mx-auto min-h-dvh w-full max-w-md border-x border-white/[0.03] bg-[#0b0d12] shadow-2xl">
-        <MenuHeader xp={progress.xp} streakDays={progress.streakDays} onOpenSettings={onOpenSettings} />
+        <MenuHeader xp={progress.xp} streakDays={progress.streakDays} levelNumber={progress.levelNumber} levelStartXp={progress.levelStartXp} nextLevelXp={progress.nextLevelXp} onOpenSettings={onOpenSettings} />
         <AppNavigation active="menu" onNavigate={onNavigate} />
 
         <div className="px-5 pb-16 pt-10">

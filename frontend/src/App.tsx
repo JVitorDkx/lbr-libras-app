@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { GameScreen } from "./components/game/GameScreen";
 import { LevelComplete } from "./components/game/LevelComplete";
@@ -9,6 +9,7 @@ import { useAppSettings } from "./hooks/useAppSettings";
 import { usePlayerProgress } from "./hooks/usePlayerProgress";
 import { apiPost } from "./lib/api";
 import { PROGRESS_STORAGE_KEY } from "./lib/progress";
+import { preloadVLibrasGamePlayer } from "./lib/vlibrasGamePlayer";
 import type { ApiPlayerProgress, CompleteLevelResult, GameLevel } from "./types/game";
 
 type AppScreen = "menu" | "profile" | "game" | "complete";
@@ -16,24 +17,37 @@ type AppScreen = "menu" | "profile" | "game" | "complete";
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("menu");
   const [activeLevel, setActiveLevel] = useState<GameLevel | null>(null);
-  const [awardedXp, setAwardedXp] = useState(0);
+  const [lessonStartXp, setLessonStartXp] = useState(0);
+  const [lessonStartLevel, setLessonStartLevel] = useState(1);
+  const [lessonMaxCombo, setLessonMaxCombo] = useState(0);
+  const [completionResult, setCompletionResult] = useState<CompleteLevelResult | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resetError, setResetError] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
-  const { progress, applyServerProgress } = usePlayerProgress();
+  const { progress, applyServerProgress, applyAnswerProgress } = usePlayerProgress();
   const { settings, updateSetting } = useAppSettings();
+
+  useEffect(() => {
+    // O preload e intencionalmente silencioso: se a rede externa falhar, a
+    // propria tela do jogo apresenta a opcao de tentar novamente.
+    void preloadVLibrasGamePlayer().catch(() => undefined);
+  }, []);
 
   const startLevel = (level: GameLevel) => {
     setActiveLevel(level);
+    setLessonStartXp(progress.xp);
+    setLessonStartLevel(progress.levelNumber);
+    setLessonMaxCombo(0);
+    setCompletionResult(null);
     setScreen("game");
   };
 
-  const finishLevel = (result: CompleteLevelResult) => {
+  const finishLevel = (result: CompleteLevelResult, maxCombo: number) => {
     if (!activeLevel) return;
-    const alreadyCompleted = progress.completedLevelIds.includes(activeLevel.id);
     applyServerProgress(result);
-    setAwardedXp(result.awarded_xp || (alreadyCompleted ? 0 : activeLevel.reward_xp));
+    setLessonMaxCombo(maxCombo);
+    setCompletionResult(result);
     setScreen("complete");
   };
 
@@ -60,9 +74,9 @@ export default function App() {
 
   let content;
   if (screen === "game" && activeLevel) {
-    content = <GameScreen level={activeLevel} soundsEnabled={settings.soundsEnabled} onExit={() => setScreen("menu")} onComplete={finishLevel} />;
-  } else if (screen === "complete") {
-    content = <LevelComplete awardedXp={awardedXp} streakDays={progress.streakDays} onReturn={() => setScreen("menu")} />;
+    content = <GameScreen level={activeLevel} soundsEnabled={settings.soundsEnabled} onExit={() => setScreen("menu")} onAnswerProgress={applyAnswerProgress} onComplete={finishLevel} />;
+  } else if (screen === "complete" && completionResult) {
+    content = <LevelComplete awardedXp={Math.max(0, completionResult.xp - lessonStartXp)} startXp={lessonStartXp} startLevel={lessonStartLevel} maxCombo={lessonMaxCombo} result={completionResult} onReturn={() => setScreen("menu")} />;
   } else if (screen === "profile") {
     content = <ProfileScreen key={`profile-${dataVersion}`} onNavigate={setScreen} onOpenSettings={() => setSettingsOpen(true)} />;
   } else {

@@ -20,6 +20,7 @@ let wrapper: HTMLElement | null = null;
 let plugin: VLibrasPlugin | null = null;
 let initialization: Promise<VLibrasPlugin> | null = null;
 let welcomeBarrier: Promise<void> | null = null;
+let preparation: Promise<void> | null = null;
 let welcomeCompleted = false;
 let playbackVersion = 0;
 let disposeTimer: number | null = null;
@@ -92,9 +93,7 @@ async function playCorrectAnswer(
 
   player.stop();
   if (!welcomeCompleted) {
-    await waitForWelcomeToStop(player);
-    await delay(FIRST_PLAYBACK_SETTLE_MS);
-    welcomeCompleted = true;
+    await preparePlayer(player);
   } else {
     await delay(NEXT_PLAYBACK_SETTLE_MS);
   }
@@ -102,6 +101,22 @@ async function playCorrectAnswer(
   if (currentVersion !== playbackVersion) return;
   player.stop();
   player.translate(correctAnswerPhrase.trim());
+}
+
+function preparePlayer(player: VLibrasPlayer) {
+  if (welcomeCompleted) return Promise.resolve();
+  if (!preparation) {
+    preparation = (async () => {
+      await waitForWelcomeToStop(player);
+      await delay(FIRST_PLAYBACK_SETTLE_MS);
+      welcomeCompleted = true;
+      player.stop();
+    })().catch((error) => {
+      preparation = null;
+      throw error;
+    });
+  }
+  return preparation;
 }
 
 async function waitForWidgetButton(currentRoot: HTMLElement) {
@@ -141,7 +156,7 @@ async function waitForPlugin(accessButton: HTMLElement) {
   throw new Error("O plugin do VLibras não ficou disponível a tempo.");
 }
 
-async function initializePlayer(mount: HTMLElement): Promise<VLibrasPlugin> {
+async function initializePlayer(): Promise<VLibrasPlugin> {
   await ensureVLibrasWidget();
   const currentRoot = getVLibrasRoot();
   if (!currentRoot) throw new Error("Raiz oficial do VLibras não encontrada.");
@@ -154,7 +169,6 @@ async function initializePlayer(mount: HTMLElement): Promise<VLibrasPlugin> {
     POLL_INTERVAL_MS,
   );
   wrapper.classList.add("lbr-vlibras-player-shell");
-  mount.appendChild(widgetHost);
 
   const accessButton = await waitForWidgetButton(widgetHost);
   plugin = await waitForPlugin(accessButton);
@@ -166,9 +180,26 @@ async function initializePlayer(mount: HTMLElement): Promise<VLibrasPlugin> {
   return plugin;
 }
 
-function getPlayer(mount: HTMLElement) {
-  if (!initialization) initialization = initializePlayer(mount);
+function getPlayer() {
+  if (!initialization) {
+    initialization = initializePlayer().catch((error) => {
+      initialization = null;
+      throw error;
+    });
+  }
   return initialization;
+}
+
+/**
+ * Aquece uma unica instancia do motor WebGL enquanto o usuario ainda esta no
+ * menu. O host permanece estacionado fora da tela ate o jogo precisar dele.
+ */
+export async function preloadVLibrasGamePlayer(): Promise<VLibrasPlayer> {
+  const activePlugin = await getPlayer();
+  disableWidgetInteractionCapture();
+  await preparePlayer(activePlugin.player);
+  keepWidgetInteractionDisabled();
+  return activePlugin.player;
 }
 
 export async function attachVLibrasGamePlayer(
@@ -181,7 +212,7 @@ export async function attachVLibrasGamePlayer(
       disposeTimer = null;
     }
 
-    const activePlugin = await getPlayer(mount);
+    const activePlugin = await getPlayer();
     if (!wrapper) throw new Error("Área visual do VLibras não encontrada.");
     if (!widgetHost) throw new Error("Estrutura visual do VLibras não encontrada.");
 
@@ -227,6 +258,4 @@ export function disposeVLibrasGamePlayer() {
     root.appendChild(widgetHost);
   }
   keepWidgetInteractionDisabled();
-  plugin = null;
-  initialization = null;
 }

@@ -1,8 +1,12 @@
+from datetime import date, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.db.models import Player
 from app.services.game_service import GameService, game_service
+from app.services.gamification import level_for_xp, register_daily_activity, xp_threshold_for_level
 
 
 client = TestClient(app)
@@ -50,6 +54,7 @@ def test_answer_validation_does_not_expose_answer_in_question() -> None:
     assert answer_response.status_code == 200
     assert answer_response.json()["correct"] is True
     assert answer_response.json()["correct_answer"] == "Olá"
+    assert answer_response.json()["awarded_xp"] == 25
 
 
 def test_greetings_level_has_four_questions() -> None:
@@ -86,6 +91,8 @@ def test_level_completion_awards_xp_only_once() -> None:
     assert first.json()["xp"] == 250
     assert repeated.json()["awarded_xp"] == 0
     assert repeated.json()["xp"] == 250
+    assert first.json()["level_number"] == 3
+    assert first.json()["leveled_up"] is True
 
     levels = client.get("/api/game/levels").json()
     by_id = {level["id"]: level for level in levels}
@@ -115,7 +122,14 @@ def test_reset_clears_sqlite_progress_and_achievements() -> None:
     levels = client.get("/api/game/levels").json()
 
     assert reset.status_code == 200
-    assert reset.json() == {"completed_level_ids": [], "xp": 0, "streak_days": 0}
+    assert reset.json() == {
+        "completed_level_ids": [],
+        "xp": 0,
+        "streak_days": 0,
+        "level_number": 1,
+        "level_start_xp": 0,
+        "next_level_xp": 100,
+    }
     assert profile["level_number"] == 1
     assert profile["signs_learned"] == 0
     assert profile["achievements_unlocked"] == 0
@@ -151,3 +165,47 @@ def test_static_media_directory_is_exposed() -> None:
 
     assert response.status_code == 200
     assert "Mídias validadas de Libras" in response.text
+
+
+def test_correct_answer_xp_is_awarded_only_once() -> None:
+    first = client.post(
+        "/api/game/levels/cumprimentos/questions/ola/answer",
+        json={"answer": "Olá"},
+    ).json()
+    repeated = client.post(
+        "/api/game/levels/cumprimentos/questions/ola/answer",
+        json={"answer": "Olá"},
+    ).json()
+    wrong = client.post(
+        "/api/game/levels/cumprimentos/questions/bom-dia/answer",
+        json={"answer": "Tchau"},
+    ).json()
+
+    assert first["awarded_xp"] == 25
+    assert first["xp"] == 25
+    assert repeated["awarded_xp"] == 0
+    assert repeated["xp"] == 25
+    assert wrong["awarded_xp"] == 0
+    assert wrong["xp"] == 25
+
+
+def test_level_thresholds_follow_the_progressive_curve() -> None:
+    assert xp_threshold_for_level(2) == 100
+    assert xp_threshold_for_level(3) == 250
+    assert level_for_xp(249) == 2
+    assert level_for_xp(250) == 3
+
+
+def test_daily_streak_increments_once_and_resets_after_a_gap() -> None:
+    player = Player(id=99, streak_days=0, level_number=1)
+    first_day = date(2026, 7, 15)
+
+    register_daily_activity(player, first_day)
+    register_daily_activity(player, first_day)
+    assert player.streak_days == 1
+
+    register_daily_activity(player, first_day + timedelta(days=1))
+    assert player.streak_days == 2
+
+    register_daily_activity(player, first_day + timedelta(days=3))
+    assert player.streak_days == 1

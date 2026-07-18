@@ -14,10 +14,10 @@ cd backend
 python -m venv .venv
 .venv/Scripts/activate
 python -m pip install -e ".[dev]"
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8001
 ```
 
-A API ficará disponível em `http://localhost:8000`. A documentação interativa estará em `http://localhost:8000/docs`.
+A API ficará disponível em `http://127.0.0.1:8001`. A documentação interativa estará em `http://127.0.0.1:8001/docs`.
 
 ## Executar o frontend
 
@@ -36,12 +36,17 @@ O frontend ficará disponível em `http://localhost:5173`.
 3. ✅ Área de jogo, feedback imediato, conclusão idempotente e +250 XP.
 4. ✅ SQLite, histórico de respostas e servidor de mídias reais.
 5. ✅ Menu autoral por categorias, perfil, estatísticas e conquistas persistentes.
+6. ✅ Gamificação avançada com combo, XP por acerto, níveis progressivos e ofensiva diária.
 
 ## Progresso do protótipo
 
 O menu consulta `GET /api/game/levels`, agrupa os tópicos em Princípios básicos, Alfabeto e Números e aplica os pré-requisitos informados pela API. O perfil e suas conquistas são carregados por `GET /api/game/profile`. O Nível 1 carrega as questões por `GET /api/game/levels/{level_id}/questions`, valida cada escolha por `POST /api/game/levels/{level_id}/questions/{question_id}/answer` e registra a conclusão por `POST /api/game/levels/{level_id}/complete`.
 
 O SQLite é a fonte principal de progresso e o `LocalStorage` funciona como cópia local de apoio. A conclusão é idempotente: repetir uma aula não concede XP duplicado. O histórico pode ser consultado em `GET /api/game/progress/answers`.
+
+Cada primeiro acerto em uma questão concede 25 XP. Os níveis usam limites cumulativos crescentes: o nível 2 começa em 100 XP, o nível 3 em 250 XP e os custos seguintes aumentam em 50 XP. A coluna `last_played_date` permite incrementar a ofensiva apenas uma vez por dia, manter a sequência em dias consecutivos e reiniciá-la após uma lacuna.
+
+Durante cada aula, o frontend mantém o combo atual e o maior combo de respostas corretas consecutivas. O feedback animado destaca a sequência durante o quiz e a tela de conclusão registra o resumo “Maior combo da aula”, junto do XP, ofensiva diária e eventual evolução de nível.
 
 ## Esquema SQLite
 
@@ -73,6 +78,7 @@ erDiagram
         int xp
         int streak_days
         int level_number
+        date last_played_date
         int total_play_seconds
         int signs_learned
         int challenges_completed
@@ -135,9 +141,15 @@ Essa estrutura é estática e existe fora da raiz controlada pelo React. A aplic
 
 A reprodução também é sincronizada com o carregamento assíncrono do player. O código aguarda `window.plugin.player`, interrompe a apresentação inicial do avatar, espera o evento `stop:welcome` e então envia exclusivamente a resposta correta da questão para `player.translate(...)`. Nas perguntas seguintes, a animação anterior é interrompida antes da nova tradução.
 
+O aquecimento do motor WebGL começa na raiz `App` assim que a aplicação é aberta. Durante o Menu, a instância única permanece estacionada em uma área técnica fora da tela, com dimensões reais de `480 × 360`, para que a Unity consiga preparar o canvas sem exibir o widget. Ao entrar na aula, o mesmo nó já carregado é movido para o card da pergunta, evitando uma nova inicialização e reduzindo a espera antes do primeiro sinal. A promessa de preparação é compartilhada entre o preload e a partida para impedir condições de corrida durante a animação de boas-vindas.
+
+As `div`s de progresso injetadas diretamente em `#gameContainer` pelo `UnityLoader` — incluindo logos e barras padrão — são ocultadas sem afetar o `canvas` irmão que renderiza o avatar. O palco começa com opacidade zero e recebe a classe `is-ready` somente depois que o player está utilizável e a tradução foi enviada; uma transição curta de opacidade revela então apenas o personagem pronto.
+
 ### Usabilidade e enquadramento do avatar
 
 A interface flutuante padrão do widget não faz parte da navegação do jogo. Os elementos `[vw-access-button]`, `.vp-access-button`, `.vp-pop-up` e `.vw-links` são ocultados globalmente com `display: none !important`. A captura de interação do widget também permanece desativada, evitando o botão intermediário “Interagir” e permitindo que o estudante utilize somente as alternativas criadas pela aplicação.
+
+Uma versão mínima dessa regra de ocultação também fica embutida no `<head>` do `index.html`. Por ser aplicada antes do download dos estilos do React e antes da inicialização do script externo, ela evita o flash do botão azul de acessibilidade durante a primeira pintura da página.
 
 Dentro da fase, apenas o player é exibido. O contêiner usa proporção `4 / 3`, centralização vertical e margens de segurança de `16px` nas laterais. O canvas respeita `object-fit: contain`, não utiliza ampliações negativas e fica limitado pelas bordas arredondadas do card. Esse enquadramento preserva espaço para a cabeça, os braços e as mãos em sinais com movimentos amplos, sem deformar ou deixar o avatar vazar sobre o restante da interface.
 

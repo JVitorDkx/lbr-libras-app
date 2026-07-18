@@ -23,6 +23,12 @@ from app.models.game import (
     PlayerProfile,
     QuestionPublic,
 )
+from app.services.gamification import (
+    ANSWER_XP,
+    level_bounds,
+    level_for_xp,
+    register_daily_activity,
+)
 
 
 DEFAULT_PLAYER_ID = 1
@@ -100,6 +106,22 @@ class GameService:
                 return None
 
             is_correct = selected_answer.casefold().strip() == question.correct_answer.casefold()
+            player = session.get(Player, DEFAULT_PLAYER_ID)
+            if player is None:
+                return None
+            previous_level = player.level_number
+            already_rewarded = session.scalar(
+                select(AnswerAttempt.id).where(
+                    AnswerAttempt.player_id == DEFAULT_PLAYER_ID,
+                    AnswerAttempt.question_id == question.id,
+                    AnswerAttempt.is_correct.is_(True),
+                )
+            )
+            awarded_xp = ANSWER_XP if is_correct and already_rewarded is None else 0
+            if awarded_xp:
+                player.xp += awarded_xp
+                player.level_number = level_for_xp(player.xp)
+            register_daily_activity(player)
             session.add(
                 AnswerAttempt(
                     player_id=DEFAULT_PLAYER_ID,
@@ -115,10 +137,18 @@ class GameService:
                 if is_correct
                 else "Quase! Observe o sinal novamente e tente outra resposta."
             )
+            level_number, level_start_xp, next_level_xp = level_bounds(player.xp)
             return AnswerResult(
                 correct=is_correct,
                 feedback=feedback,
                 correct_answer=question.correct_answer,
+                awarded_xp=awarded_xp,
+                xp=player.xp,
+                level_number=level_number,
+                leveled_up=level_number > previous_level,
+                streak_days=player.streak_days,
+                level_start_xp=level_start_xp,
+                next_level_xp=next_level_xp,
             )
 
     def get_progress(self) -> PlayerProgress:
@@ -130,10 +160,15 @@ class GameService:
                     PlayerLevelProgress.status == "completed",
                 )
             ).all()
+            xp = player.xp if player else 0
+            level_number, level_start_xp, next_level_xp = level_bounds(xp)
             return PlayerProgress(
                 completed_level_ids=sorted(completed),
-                xp=player.xp if player else 0,
+                xp=xp,
                 streak_days=player.streak_days if player else 0,
+                level_number=level_number,
+                level_start_xp=level_start_xp,
+                next_level_xp=next_level_xp,
             )
 
     def get_profile(self) -> PlayerProfile | None:
@@ -211,6 +246,8 @@ class GameService:
                 return None
 
             awarded_xp = 0
+            previous_xp = player.xp
+            previous_level = player.level_number
             if progress.status != "completed":
                 awarded_xp = level.reward_xp
                 progress.status = "completed"
@@ -230,7 +267,9 @@ class GameService:
                 if next_progress is not None and next_progress.status == "locked":
                     next_progress.status = "available"
 
-                session.commit()
+            register_daily_activity(player)
+            player.level_number = level_for_xp(player.xp)
+            session.commit()
 
             completed = session.scalars(
                 select(PlayerLevelProgress.level_id).where(
@@ -238,11 +277,18 @@ class GameService:
                     PlayerLevelProgress.status == "completed",
                 )
             ).all()
+            level_number, level_start_xp, next_level_xp = level_bounds(player.xp)
             return CompleteLevelResult(
                 completed_level_ids=sorted(completed),
                 xp=player.xp,
                 streak_days=player.streak_days,
+                level_number=level_number,
+                level_start_xp=level_start_xp,
+                next_level_xp=next_level_xp,
                 awarded_xp=awarded_xp,
+                previous_xp=previous_xp,
+                previous_level=previous_level,
+                leveled_up=level_number > previous_level,
             )
 
     def reset_progress(self) -> None:
@@ -252,6 +298,7 @@ class GameService:
                 player.xp = 0
                 player.streak_days = 0
                 player.level_number = 1
+                player.last_played_date = None
                 player.total_play_seconds = 0
                 player.signs_learned = 0
                 player.challenges_completed = 0

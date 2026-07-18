@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { completeLevel, getLevelStatus, initialProgress } from "./progress";
+import { completeLevel, getLevelStatus, initialProgress, levelForXp, xpThresholdForLevel } from "./progress";
 import type { GameLevel } from "../types/game";
 
 const greetings: GameLevel = {
@@ -41,5 +41,12 @@ describe("progresso da trilha", () => {
     expect(getLevelStatus(greetings, completed)).toBe("completed");
     expect(getLevelStatus(alphabet, completed)).toBe("available");
     expect(repeated).toBe(completed);
+  });
+
+  it("usa limites cumulativos crescentes para os níveis", () => {
+    expect(xpThresholdForLevel(2)).toBe(100);
+    expect(xpThresholdForLevel(3)).toBe(250);
+    expect(levelForXp(249)).toBe(2);
+    expect(levelForXp(250)).toBe(3);
   });
 });

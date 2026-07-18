@@ -28,19 +28,35 @@ export interface AnswerResult {
   correct: boolean;
   feedback: string;
   correct_answer: string;
+  awarded_xp: number;
+  xp: number;
+  level_number: number;
+  leveled_up: boolean;
+  streak_days: number;
+  level_start_xp: number;
+  next_level_xp: number;
 }
 
 export interface CompleteLevelResult {
   completed_level_ids: string[];
   xp: number;
   streak_days: number;
+  level_number: number;
+  level_start_xp: number;
+  next_level_xp: number;
   awarded_xp: number;
+  previous_xp: number;
+  previous_level: number;
+  leveled_up: boolean;
 }
 
 export interface ApiPlayerProgress {
   completed_level_ids: string[];
   xp: number;
   streak_days: number;
+  level_number: number;
+  level_start_xp: number;
+  next_level_xp: number;
 }
 
 export interface Achievement {

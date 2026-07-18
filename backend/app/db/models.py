@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, JSON, String, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -22,6 +22,7 @@ class Player(Base):
     xp: Mapped[int] = mapped_column(Integer, default=0)
     streak_days: Mapped[int] = mapped_column(Integer, default=3)
     level_number: Mapped[int] = mapped_column(Integer, default=14)
+    last_played_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     total_play_seconds: Mapped[int] = mapped_column(Integer, default=115_200)
     signs_learned: Mapped[int] = mapped_column(Integer, default=248)
     challenges_completed: Mapped[int] = mapped_column(Integer, default=56)

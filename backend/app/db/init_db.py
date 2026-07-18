@@ -29,6 +29,7 @@ def _migrate_existing_database() -> None:
     additions = {
         "players": {
             "level_number": "INTEGER NOT NULL DEFAULT 14",
+            "last_played_date": "DATE",
             "total_play_seconds": "INTEGER NOT NULL DEFAULT 115200",
             "signs_learned": "INTEGER NOT NULL DEFAULT 248",
             "challenges_completed": "INTEGER NOT NULL DEFAULT 56",

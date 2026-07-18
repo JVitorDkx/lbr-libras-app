@@ -3,10 +3,18 @@ import { Flame, Settings, Star } from "lucide-react";
 interface MenuHeaderProps {
   xp: number;
   streakDays: number;
+  levelNumber: number;
+  levelStartXp: number;
+  nextLevelXp: number;
   onOpenSettings: () => void;
 }
 
-export function MenuHeader({ xp, streakDays, onOpenSettings }: MenuHeaderProps) {
+export function MenuHeader({ xp, streakDays, levelNumber, levelStartXp, nextLevelXp, onOpenSettings }: MenuHeaderProps) {
+  const levelPercent = Math.max(
+    0,
+    Math.min(100, ((xp - levelStartXp) / (nextLevelXp - levelStartXp)) * 100),
+  );
+
   return (
     <header className="px-5 pb-5 pt-6">
       <div className="flex items-center gap-3">
@@ -15,7 +23,10 @@ export function MenuHeader({ xp, streakDays, onOpenSettings }: MenuHeaderProps) 
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-display text-base font-extrabold">JVitor</p>
-          <p className="text-[11px] text-[#9098a3]">Level 14</p>
+          <p className="text-[11px] text-[#9098a3]">Level {levelNumber}</p>
+          <div className="mt-1.5 h-1.5 w-28 overflow-hidden rounded-full bg-white/[0.07]" aria-label={`${Math.round(levelPercent)}% do nível concluído`}>
+            <div className="h-full rounded-full bg-gradient-to-r from-[#6042ff] to-[#38d6c5]" style={{ width: `${levelPercent}%` }} />
+          </div>
         </div>
         <button type="button" onClick={onOpenSettings} aria-label="Abrir configurações" className="grid size-11 place-items-center rounded-full text-white transition hover:bg-white/5">
           <Settings className="size-5" />

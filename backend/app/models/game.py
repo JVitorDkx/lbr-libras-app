@@ -39,12 +39,22 @@ class AnswerResult(BaseModel):
     correct: bool
     feedback: str
     correct_answer: str
+    awarded_xp: int = Field(ge=0)
+    xp: int = Field(ge=0)
+    level_number: int = Field(ge=1)
+    leveled_up: bool
+    streak_days: int = Field(ge=0)
+    level_start_xp: int = Field(ge=0)
+    next_level_xp: int = Field(gt=0)
 
 
 class PlayerProgress(BaseModel):
     completed_level_ids: list[str]
     xp: int = Field(ge=0)
     streak_days: int = Field(ge=0)
+    level_number: int = Field(ge=1)
+    level_start_xp: int = Field(ge=0)
+    next_level_xp: int = Field(gt=0)
 
 
 class AchievementSummary(BaseModel):
@@ -75,6 +85,9 @@ class PlayerProfile(BaseModel):
 
 class CompleteLevelResult(PlayerProgress):
     awarded_xp: int = Field(ge=0)
+    previous_xp: int = Field(ge=0)
+    previous_level: int = Field(ge=1)
+    leveled_up: bool
 
 
 class AnswerAttemptSummary(BaseModel):

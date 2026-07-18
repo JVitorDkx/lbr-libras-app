@@ -44,7 +44,11 @@ export function VLibrasQuestionPlayer({
       <span className="sr-only" data-vlibras-question-target>
         {correctAnswerPhrase}
       </span>
-      <div ref={mountRef} className="lbr-vlibras-stage absolute inset-0" />
+      <div
+        ref={mountRef}
+        className={`lbr-vlibras-stage absolute inset-0 ${status === "ready" ? "is-ready" : ""}`}
+        aria-hidden={status !== "ready"}
+      />
 
       {status === "loading" && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_42%,rgb(109_74_255_/_0.2),transparent_58%),#121722]">

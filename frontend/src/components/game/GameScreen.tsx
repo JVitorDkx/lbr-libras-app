@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Eye, LoaderCircle, RefreshCw, X } from "lucide-react";
+import { Eye, Flame, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { apiGet, apiPost } from "../../lib/api";
@@ -12,11 +12,12 @@ import { QuestionMedia } from "./QuestionMedia";
 interface GameScreenProps {
   level: GameLevel;
   onExit: () => void;
-  onComplete: (result: CompleteLevelResult) => void;
+  onComplete: (result: CompleteLevelResult, maxCombo: number) => void;
+  onAnswerProgress: (result: AnswerResult) => void;
   soundsEnabled: boolean;
 }
 
-export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScreenProps) {
+export function GameScreen({ level, onExit, onComplete, onAnswerProgress, soundsEnabled }: GameScreenProps) {
   const [questions, setQuestions] = useState<GameQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -27,6 +28,8 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -37,6 +40,8 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
       .then((data) => {
         setQuestions(data);
         setCurrentIndex(0);
+        setCombo(0);
+        setMaxCombo(0);
       })
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === "AbortError")) setLoadError(true);
@@ -64,6 +69,10 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
         { answer },
       );
       setResult(answerResult);
+      const nextCombo = answerResult.correct ? combo + 1 : 0;
+      setCombo(nextCombo);
+      setMaxCombo((currentMax) => Math.max(currentMax, nextCombo));
+      onAnswerProgress(answerResult);
       playFeedbackTone(answerResult.correct, soundsEnabled);
     } catch {
       setSelectedAnswer(null);
@@ -86,7 +95,7 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
     setSaveError(false);
     try {
       const completion = await apiPost<CompleteLevelResult>(`/game/levels/${level.id}/complete`);
-      onComplete(completion);
+      onComplete(completion, maxCombo);
     } catch {
       setSaveError(true);
     } finally {
@@ -135,7 +144,7 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
 
       <section className="relative mx-auto w-full max-w-md px-5 sm:px-6">
         <AnimatePresence mode="wait">
-          <motion.div key={question.id} initial={{ opacity: 0, x: 26 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -26 }} transition={{ duration: 0.3, ease: "easeOut" }}>
+          <motion.div key={question.id} initial={{ opacity: 0, x: 26, y: 8 }} animate={{ opacity: 1, x: 0, y: 0 }} exit={{ opacity: 0, x: -26, y: -8 }} transition={{ duration: 0.3, ease: "easeOut" }}>
             <div className="mb-5">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-cyan">Nível 1 · Cumprimentos</p>
               <h1 className="mt-2 font-display text-2xl font-black leading-tight">{question.prompt}</h1>
@@ -145,8 +154,23 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
               </p>
             </div>
 
-            <motion.div initial={{ scale: 0.97 }} animate={{ scale: 1 }} className="rounded-card border border-app-border bg-app-card p-3 shadow-card">
+            <motion.div initial={{ scale: 0.97 }} animate={{ scale: 1 }} className="relative rounded-card border border-app-border bg-app-card p-3 shadow-card">
               <QuestionMedia question={question} />
+              <AnimatePresence>
+                {result?.correct && combo >= 2 && (
+                  <motion.div
+                    key={combo}
+                    initial={{ opacity: 0, scale: 0.65, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="absolute right-5 top-5 z-20 flex items-center gap-1.5 rounded-full border border-brand-amber/30 bg-app/90 px-3 py-2 text-xs font-black text-brand-amber shadow-lg backdrop-blur"
+                    aria-live="polite"
+                  >
+                    <Flame className="size-4 fill-brand-amber" />
+                    {combo}x combo de acertos!
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             <div className="mt-6">
@@ -159,7 +183,7 @@ export function GameScreen({ level, onExit, onComplete, soundsEnabled }: GameScr
       </section>
 
       <AnimatePresence>
-        {result && <FeedbackSheet result={result} isLastQuestion={isLastQuestion} saving={saving} saveError={saveError} onContinue={continueGame} />}
+        {result && <FeedbackSheet result={result} combo={combo} isLastQuestion={isLastQuestion} saving={saving} saveError={saveError} onContinue={continueGame} />}
       </AnimatePresence>
     </main>
   );

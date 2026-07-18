@@ -25,8 +25,16 @@ export function AnswerGrid({ options, selectedAnswer, result, disabled, onSelect
             disabled={disabled}
             whileHover={disabled ? undefined : { y: -2 }}
             whileTap={disabled ? undefined : { y: 4, scale: 0.98 }}
+            animate={
+              result && isCorrect
+                ? { scale: [1, 1.035, 1], boxShadow: ["0 0 0 rgb(66 220 132 / 0)", "0 0 24px rgb(66 220 132 / 0.32)", "0 0 0 rgb(66 220 132 / 0)"] }
+                : isWrongSelection
+                  ? { x: [0, -5, 5, -3, 3, 0] }
+                  : undefined
+            }
+            transition={{ duration: 0.45, ease: "easeOut" }}
             onClick={() => onSelect(option)}
-            className={`relative min-h-[4.6rem] rounded-2xl border px-3 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-cyan disabled:cursor-default ${
+            className={`relative min-h-[4.6rem] rounded-2xl border px-3 py-3 text-left transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-cyan disabled:cursor-default ${
               isCorrect && result
                 ? "border-success/60 bg-success-surface text-success"
                 : isWrongSelection

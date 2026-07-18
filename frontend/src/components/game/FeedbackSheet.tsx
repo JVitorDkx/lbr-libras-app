@@ -5,13 +5,14 @@ import type { AnswerResult } from "../../types/game";
 
 interface FeedbackSheetProps {
   result: AnswerResult;
+  combo: number;
   isLastQuestion: boolean;
   saving: boolean;
   saveError: boolean;
   onContinue: () => void;
 }
 
-export function FeedbackSheet({ result, isLastQuestion, saving, saveError, onContinue }: FeedbackSheetProps) {
+export function FeedbackSheet({ result, combo, isLastQuestion, saving, saveError, onContinue }: FeedbackSheetProps) {
   const correct = result.correct;
 
   return (
@@ -33,6 +34,13 @@ export function FeedbackSheet({ result, isLastQuestion, saving, saveError, onCon
           <p className="mt-1 text-sm leading-5 text-app-text/85">
             {correct ? result.feedback : `A resposta correta é “${result.correct_answer}”.`}
           </p>
+          {correct && (
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-black">
+              {result.awarded_xp > 0 && <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">+{result.awarded_xp} XP</span>}
+              {combo >= 2 && <span className="rounded-full bg-brand-amber/15 px-2.5 py-1 text-brand-amber">🔥 Combo {combo}x</span>}
+              {result.leveled_up && <span className="rounded-full bg-brand-violet/20 px-2.5 py-1 text-brand-violet-light">Level up!</span>}
+            </div>
+          )}
           {saveError && <p className="mt-2 text-xs font-bold text-danger">Não foi possível salvar o progresso. Tente novamente.</p>}
           <motion.button
             type="button"

@@ -9,6 +9,7 @@ from app.db.models import (
     PlayerLevelProgress,
     Question,
 )
+from app.services.gamification import level_for_xp
 
 
 LEVELS = [
@@ -143,6 +144,7 @@ def seed_database(session: Session) -> None:
         )
         session.add(player)
         session.flush()
+    player.level_number = level_for_xp(player.xp)
 
     progress_by_level = {
         item.level_id: item
