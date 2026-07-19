@@ -14,7 +14,7 @@ cd backend
 python -m venv .venv
 .venv/Scripts/activate
 python -m pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload
 ```
 
 A API ficará disponível em `http://127.0.0.1:8001`. A documentação interativa estará em `http://127.0.0.1:8001/docs`.
