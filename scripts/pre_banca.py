@@ -165,13 +165,19 @@ def verify_api_with_temporary_database(database_path: Path) -> None:
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait(timeout=5)
+        # O Windows pode manter o arquivo SQLite bloqueado por alguns
+        # milissegundos depois do encerramento do processo do Uvicorn.
+        time.sleep(0.25)
 
 
 def main() -> int:
     announce("Iniciando verificacao completa do LBRLibras")
     pnpm = find_pnpm()
 
-    with tempfile.TemporaryDirectory(prefix="lbrlibras-pre-banca-") as temp_dir:
+    with tempfile.TemporaryDirectory(
+        prefix="lbrlibras-pre-banca-",
+        ignore_cleanup_errors=True,
+    ) as temp_dir:
         temporary_root = Path(temp_dir)
         test_env = os.environ.copy()
         test_env["LBRLIBRAS_DATABASE_URL"] = (
