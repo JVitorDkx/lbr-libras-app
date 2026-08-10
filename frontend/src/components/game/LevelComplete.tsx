@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Crown, Flame, Sparkles, Star, Trophy } from "lucide-react";
 
-import type { CompleteLevelResult } from "../../types/game";
+import type { CompleteLevelResult, GameLevel } from "../../types/game";
 
 interface LevelCompleteProps {
+  level: GameLevel;
   awardedXp: number;
   startXp: number;
   startLevel: number;
@@ -12,7 +13,7 @@ interface LevelCompleteProps {
   onReturn: () => void;
 }
 
-export function LevelComplete({ awardedXp, startXp, startLevel, maxCombo, result, onReturn }: LevelCompleteProps) {
+export function LevelComplete({ level, awardedXp, startXp, startLevel, maxCombo, result, onReturn }: LevelCompleteProps) {
   const leveledUp = result.level_number > startLevel;
   const levelRange = result.next_level_xp - result.level_start_xp;
   const startPercent = leveledUp
@@ -36,7 +37,7 @@ export function LevelComplete({ awardedXp, startXp, startLevel, maxCombo, result
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
           <p className="mt-10 text-[11px] font-black uppercase tracking-[0.22em] text-brand-amber">Nível concluído</p>
           <h1 className="mt-3 font-display text-4xl font-black leading-tight">Mandou muito bem!</h1>
-          <p className="mt-3 text-sm leading-6 text-app-muted">Você completou Cumprimentos e deu mais um passo na sua jornada em Libras.</p>
+          <p className="mt-3 text-sm leading-6 text-app-muted">Você completou {level.title} e deu mais um passo na sua jornada em Libras.</p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }} className="mt-8 grid w-full grid-cols-2 gap-3">
@@ -96,7 +97,7 @@ export function LevelComplete({ awardedXp, startXp, startLevel, maxCombo, result
         {result.awarded_xp > 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }} className="mt-4 flex items-center gap-2 rounded-full border border-success/20 bg-success/10 px-4 py-2 text-xs font-extrabold text-success">
             <Check className="size-4" strokeWidth={3} />
-            Próximo tópico desbloqueado
+            Progresso da trilha atualizado
           </motion.div>
         )}
 

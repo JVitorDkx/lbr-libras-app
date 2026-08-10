@@ -1,2 +1,1 @@
 """LBRLibras API package."""
-

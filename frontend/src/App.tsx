@@ -76,7 +76,7 @@ export default function App() {
   if (screen === "game" && activeLevel) {
     content = <GameScreen level={activeLevel} soundsEnabled={settings.soundsEnabled} onExit={() => setScreen("menu")} onAnswerProgress={applyAnswerProgress} onComplete={finishLevel} />;
   } else if (screen === "complete" && completionResult) {
-    content = <LevelComplete awardedXp={Math.max(0, completionResult.xp - lessonStartXp)} startXp={lessonStartXp} startLevel={lessonStartLevel} maxCombo={lessonMaxCombo} result={completionResult} onReturn={() => setScreen("menu")} />;
+    content = activeLevel ? <LevelComplete level={activeLevel} awardedXp={Math.max(0, completionResult.xp - lessonStartXp)} startXp={lessonStartXp} startLevel={lessonStartLevel} maxCombo={lessonMaxCombo} result={completionResult} onReturn={() => setScreen("menu")} /> : null;
   } else if (screen === "profile") {
     content = <ProfileScreen key={`profile-${dataVersion}`} onNavigate={setScreen} onOpenSettings={() => setSettingsOpen(true)} />;
   } else {

@@ -256,16 +256,17 @@ class GameService:
                 progress.completed_at = datetime.now(timezone.utc)
                 player.xp += awarded_xp
 
-                next_progress = session.scalar(
+                next_progress_items = session.scalars(
                     select(PlayerLevelProgress)
                     .join(Level, PlayerLevelProgress.level_id == Level.id)
                     .where(
                         PlayerLevelProgress.player_id == DEFAULT_PLAYER_ID,
                         Level.prerequisite_level_id == level_id,
                     )
-                )
-                if next_progress is not None and next_progress.status == "locked":
-                    next_progress.status = "available"
+                ).all()
+                for next_progress in next_progress_items:
+                    if next_progress.status == "locked":
+                        next_progress.status = "available"
 
             register_daily_activity(player)
             player.level_number = level_for_xp(player.xp)

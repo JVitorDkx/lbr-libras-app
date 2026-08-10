@@ -146,7 +146,7 @@ export function GameScreen({ level, onExit, onComplete, onAnswerProgress, sounds
         <AnimatePresence mode="wait">
           <motion.div key={question.id} initial={{ opacity: 0, x: 26, y: 8 }} animate={{ opacity: 1, x: 0, y: 0 }} exit={{ opacity: 0, x: -26, y: -8 }} transition={{ duration: 0.3, ease: "easeOut" }}>
             <div className="mb-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-cyan">Nível 1 · Cumprimentos</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-cyan">Nível {level.order} · {level.title}</p>
               <h1 className="mt-2 font-display text-2xl font-black leading-tight">{question.prompt}</h1>
               <p className="mt-2 flex items-center gap-1.5 text-xs text-app-muted">
                 <Eye className="size-3.5 text-brand-amber" />

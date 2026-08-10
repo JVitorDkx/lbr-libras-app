@@ -40,7 +40,9 @@ O frontend ficará disponível em `http://localhost:5173`.
 
 ## Progresso do protótipo
 
-O menu consulta `GET /api/game/levels`, agrupa os tópicos em Princípios básicos, Alfabeto e Números e aplica os pré-requisitos informados pela API. O perfil e suas conquistas são carregados por `GET /api/game/profile`. O Nível 1 carrega as questões por `GET /api/game/levels/{level_id}/questions`, valida cada escolha por `POST /api/game/levels/{level_id}/questions/{question_id}/answer` e registra a conclusão por `POST /api/game/levels/{level_id}/complete`.
+O menu consulta `GET /api/game/levels`, agrupa os tópicos em Princípios básicos, Alfabeto e Números e aplica os pré-requisitos informados pela API. O perfil e suas conquistas são carregados por `GET /api/game/profile`. Os módulos jogáveis carregam as questões por `GET /api/game/levels/{level_id}/questions`, validam cada escolha por `POST /api/game/levels/{level_id}/questions/{question_id}/answer` e registram a conclusão por `POST /api/game/levels/{level_id}/complete`.
+
+O recorte pedagógico atual possui 16 atividades: quatro de Cumprimentos, seis do Alfabeto A–F e seis de Números de zero a cinco. A estrutura, as frases enviadas ao avatar e o status de validação estão documentados na [matriz de conteúdo](docs/MATRIZ_CONTEUDO.md).
 
 O SQLite é a fonte principal de progresso e o `LocalStorage` funciona como cópia local de apoio. A conclusão é idempotente: repetir uma aula não concede XP duplicado. O histórico pode ser consultado em `GET /api/game/progress/answers`.
 

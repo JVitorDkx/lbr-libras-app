@@ -40,8 +40,8 @@ LEVELS = [
     {
         "id": "alfabeto",
         "order": 3,
-        "title": "Alfabeto A–Z",
-        "description": "Introdução ao alfabeto manual",
+        "title": "Alfabeto A–F",
+        "description": "Primeiras seis letras do alfabeto manual",
         "accent": "coral",
         "category": "Alfabeto",
         "icon_key": "letters",
@@ -65,7 +65,7 @@ LEVELS = [
         "id": "numeros",
         "order": 5,
         "title": "Números",
-        "description": "Sinais numéricos básicos",
+        "description": "Números básicos de zero a cinco",
         "accent": "teal",
         "category": "Números",
         "icon_key": "numbers",
@@ -93,10 +93,134 @@ ACHIEVEMENTS = [
 ]
 
 QUESTIONS = [
-    ("ola", "video", "/static/media/signs/ola.mp4", "Olá", 1),
-    ("bom-dia", "gif", "/static/media/signs/bom-dia.gif", "Bom dia", 2),
-    ("boa-tarde", "video", "/static/media/signs/boa-tarde.mp4", "Boa tarde", 3),
-    ("tchau", "image", "/static/media/signs/tchau.webp", "Tchau", 4),
+    {
+        "id": "ola",
+        "level_id": "cumprimentos",
+        "prompt": "Qual cumprimento está sendo apresentado?",
+        "correct_answer": "Olá",
+        "options": ["Olá", "Bom dia", "Boa tarde", "Tchau"],
+        "position": 1,
+    },
+    {
+        "id": "bom-dia",
+        "level_id": "cumprimentos",
+        "prompt": "Qual cumprimento está sendo apresentado?",
+        "correct_answer": "Bom dia",
+        "options": ["Tchau", "Bom dia", "Olá", "Boa tarde"],
+        "position": 2,
+    },
+    {
+        "id": "boa-tarde",
+        "level_id": "cumprimentos",
+        "prompt": "Qual cumprimento está sendo apresentado?",
+        "correct_answer": "Boa tarde",
+        "options": ["Bom dia", "Tchau", "Boa tarde", "Olá"],
+        "position": 3,
+    },
+    {
+        "id": "tchau",
+        "level_id": "cumprimentos",
+        "prompt": "Qual cumprimento está sendo apresentado?",
+        "correct_answer": "Tchau",
+        "options": ["Boa tarde", "Olá", "Bom dia", "Tchau"],
+        "position": 4,
+    },
+    {
+        "id": "alfabeto-a",
+        "level_id": "alfabeto",
+        "prompt": "Qual letra está sendo apresentada pelo avatar?",
+        "correct_answer": "Letra A",
+        "options": ["Letra A", "Letra B", "Letra C", "Letra D"],
+        "position": 1,
+    },
+    {
+        "id": "alfabeto-b",
+        "level_id": "alfabeto",
+        "prompt": "Qual letra está sendo apresentada pelo avatar?",
+        "correct_answer": "Letra B",
+        "options": ["Letra D", "Letra B", "Letra F", "Letra A"],
+        "position": 2,
+    },
+    {
+        "id": "alfabeto-c",
+        "level_id": "alfabeto",
+        "prompt": "Qual letra está sendo apresentada pelo avatar?",
+        "correct_answer": "Letra C",
+        "options": ["Letra E", "Letra A", "Letra C", "Letra F"],
+        "position": 3,
+    },
+    {
+        "id": "alfabeto-d",
+        "level_id": "alfabeto",
+        "prompt": "Qual letra está sendo apresentada pelo avatar?",
+        "correct_answer": "Letra D",
+        "options": ["Letra B", "Letra D", "Letra A", "Letra E"],
+        "position": 4,
+    },
+    {
+        "id": "alfabeto-e",
+        "level_id": "alfabeto",
+        "prompt": "Qual letra está sendo apresentada pelo avatar?",
+        "correct_answer": "Letra E",
+        "options": ["Letra C", "Letra F", "Letra E", "Letra B"],
+        "position": 5,
+    },
+    {
+        "id": "alfabeto-f",
+        "level_id": "alfabeto",
+        "prompt": "Qual letra está sendo apresentada pelo avatar?",
+        "correct_answer": "Letra F",
+        "options": ["Letra A", "Letra E", "Letra C", "Letra F"],
+        "position": 6,
+    },
+    {
+        "id": "numero-zero",
+        "level_id": "numeros",
+        "prompt": "Qual número está sendo apresentado pelo avatar?",
+        "correct_answer": "Zero",
+        "options": ["Zero", "Um", "Dois", "Três"],
+        "position": 1,
+    },
+    {
+        "id": "numero-um",
+        "level_id": "numeros",
+        "prompt": "Qual número está sendo apresentado pelo avatar?",
+        "correct_answer": "Um",
+        "options": ["Quatro", "Um", "Cinco", "Zero"],
+        "position": 2,
+    },
+    {
+        "id": "numero-dois",
+        "level_id": "numeros",
+        "prompt": "Qual número está sendo apresentado pelo avatar?",
+        "correct_answer": "Dois",
+        "options": ["Cinco", "Zero", "Dois", "Quatro"],
+        "position": 3,
+    },
+    {
+        "id": "numero-tres",
+        "level_id": "numeros",
+        "prompt": "Qual número está sendo apresentado pelo avatar?",
+        "correct_answer": "Três",
+        "options": ["Um", "Três", "Zero", "Cinco"],
+        "position": 4,
+    },
+    {
+        "id": "numero-quatro",
+        "level_id": "numeros",
+        "prompt": "Qual número está sendo apresentado pelo avatar?",
+        "correct_answer": "Quatro",
+        "options": ["Dois", "Cinco", "Quatro", "Um"],
+        "position": 5,
+    },
+    {
+        "id": "numero-cinco",
+        "level_id": "numeros",
+        "prompt": "Qual número está sendo apresentado pelo avatar?",
+        "correct_answer": "Cinco",
+        "options": ["Zero", "Três", "Dois", "Cinco"],
+        "position": 6,
+    },
 ]
 
 
@@ -115,18 +239,18 @@ def seed_database(session: Session) -> None:
                 setattr(level, key, value)
     session.flush()
 
-    options = ["Olá", "Bom dia", "Boa tarde", "Tchau"]
-    for question_id, media_type, media_url, correct_answer, position in QUESTIONS:
-        question = session.get(Question, question_id)
+    for source in QUESTIONS:
+        question = session.get(Question, source["id"])
         if question is None:
-            question = Question(id=question_id, level_id="cumprimentos")
+            question = Question(id=source["id"], level_id=source["level_id"])
             session.add(question)
-        question.prompt = "Qual cumprimento está sendo apresentado?"
-        question.media_type = media_type
-        question.media_url = media_url
-        question.options = options
-        question.correct_answer = correct_answer
-        question.position = position
+        question.level_id = source["level_id"]
+        question.prompt = source["prompt"]
+        question.media_type = "vlibras"
+        question.media_url = ""
+        question.options = source["options"]
+        question.correct_answer = source["correct_answer"]
+        question.position = source["position"]
 
     player = session.get(Player, 1)
     if player is None:

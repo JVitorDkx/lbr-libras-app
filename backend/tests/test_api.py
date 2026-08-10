@@ -82,6 +82,56 @@ def test_greetings_level_has_four_questions() -> None:
     assert "media_type" not in questions[0]
 
 
+@pytest.mark.parametrize(
+    ("level_id", "expected_ids", "expected_phrases"),
+    [
+        (
+            "alfabeto",
+            [f"alfabeto-{letter}" for letter in "abcdef"],
+            [f"Letra {letter}" for letter in "ABCDEF"],
+        ),
+        (
+            "numeros",
+            [
+                "numero-zero",
+                "numero-um",
+                "numero-dois",
+                "numero-tres",
+                "numero-quatro",
+                "numero-cinco",
+            ],
+            ["Zero", "Um", "Dois", "Três", "Quatro", "Cinco"],
+        ),
+    ],
+)
+def test_new_learning_modules_have_playable_questions(
+    level_id: str,
+    expected_ids: list[str],
+    expected_phrases: list[str],
+) -> None:
+    response = client.get(f"/api/game/levels/{level_id}/questions")
+
+    assert response.status_code == 200
+    questions = response.json()
+    assert [question["id"] for question in questions] == expected_ids
+    assert [question["avatar_phrase"] for question in questions] == expected_phrases
+    assert all(len(question["options"]) == 4 for question in questions)
+    assert all(
+        question["avatar_phrase"] in question["options"]
+        for question in questions
+    )
+
+
+def test_catalog_reports_all_three_modules_as_playable() -> None:
+    levels = client.get("/api/game/levels").json()
+    by_id = {level["id"]: level for level in levels}
+
+    assert by_id["cumprimentos"]["question_count"] == 4
+    assert by_id["alfabeto"]["question_count"] == 6
+    assert by_id["numeros"]["question_count"] == 6
+    assert by_id["alfabeto"]["title"] == "Alfabeto A–F"
+
+
 def test_level_completion_awards_xp_only_once() -> None:
     first = client.post("/api/game/levels/cumprimentos/complete")
     repeated = client.post("/api/game/levels/cumprimentos/complete")
@@ -98,6 +148,16 @@ def test_level_completion_awards_xp_only_once() -> None:
     by_id = {level["id"]: level for level in levels}
     assert by_id["alfabeto"]["status"] == "available"
     assert by_id["cumprimentos"]["progress_percent"] == 100
+
+
+def test_completing_alphabet_unlocks_all_dependent_topics() -> None:
+    client.post("/api/game/levels/cumprimentos/complete")
+    client.post("/api/game/levels/alfabeto/complete")
+
+    levels = client.get("/api/game/levels").json()
+    by_id = {level["id"]: level for level in levels}
+    assert by_id["soletracao"]["status"] == "available"
+    assert by_id["numeros"]["status"] == "available"
 
 
 def test_profile_reads_statistics_and_achievements_from_sqlite() -> None:
