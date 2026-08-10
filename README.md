@@ -189,6 +189,22 @@ recuperar uma oscilação do serviço sem criar dois widgets ou corromper o canv
 Unity. O player também permanece sem fallback de sinais artificiais: a ausência
 do avatar é informada com transparência ao estudante.
 
+## Avaliação formativa e verificação pré-banca
+
+O [Guia de Avaliação Formativa e Usabilidade](docs/GUIA_AVALIACAO_USABILIDADE.md)
+reúne o roteiro de tarefas, questionário SUS, ficha de validação com especialista
+em Libras e cuidados para registrar evidências do TCC sem fabricar resultados.
+
+Com as dependências instaladas, a integridade completa pode ser conferida na
+raiz do repositório:
+
+```powershell
+backend\.venv\Scripts\python.exe scripts\pre_banca.py
+```
+
+O comando usa bancos temporários, verifica testes, build, seed zerado e contratos
+da API sem modificar o progresso local real da demonstração.
+
 ## Tratamento global de falhas
 
 A árvore React é protegida por um `AppErrorBoundary`. Uma exceção inesperada de
