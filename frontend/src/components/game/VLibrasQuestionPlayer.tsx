@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   attachVLibrasGamePlayer,
   detachVLibrasGamePlayer,
+  prepareVLibrasGamePlayerRetry,
 } from "../../lib/vlibrasGamePlayer";
 
 interface VLibrasQuestionPlayerProps {
@@ -18,6 +19,11 @@ export function VLibrasQuestionPlayer({
   const mountRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<PlayerStatus>("loading");
   const [retryKey, setRetryKey] = useState(0);
+
+  const retry = () => {
+    prepareVLibrasGamePlayerRetry();
+    setRetryKey((key) => key + 1);
+  };
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -64,7 +70,11 @@ export function VLibrasQuestionPlayer({
       )}
 
       {status === "error" && (
-        <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_42%,rgb(255_95_109_/_0.12),transparent_58%),#121722] p-6 text-center">
+        <div
+          className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_42%,rgb(255_95_109_/_0.12),transparent_58%),#121722] p-6 text-center"
+          role="alert"
+          aria-live="polite"
+        >
           <div>
             <div className="mx-auto grid size-20 place-items-center rounded-[1.6rem] border border-danger/20 bg-danger/10 text-danger">
               <CloudOff className="size-9" />
@@ -75,9 +85,10 @@ export function VLibrasQuestionPlayer({
             </p>
             <button
               type="button"
-              onClick={() => setRetryKey((key) => key + 1)}
-              className="mt-4 min-h-10 rounded-xl bg-brand-violet px-4 text-xs font-black text-white"
+              onClick={retry}
+              className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-brand-violet px-4 text-xs font-black text-white transition hover:bg-brand-violet-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
             >
+              <RotateCcw className="size-3.5" />
               Tentar novamente
             </button>
           </div>
@@ -92,7 +103,7 @@ export function VLibrasQuestionPlayer({
           </span>
           <button
             type="button"
-            onClick={() => setRetryKey((key) => key + 1)}
+            onClick={retry}
             className="grid size-9 place-items-center rounded-full border border-white/10 bg-app/80 text-white backdrop-blur hover:bg-app-card"
             aria-label="Repetir sinal no avatar"
           >

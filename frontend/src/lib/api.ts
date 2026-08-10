@@ -1,7 +1,19 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8001/api";
+const DEFAULT_API_URL = "http://127.0.0.1:8001/api";
+
+export function normalizeApiBaseUrl(value: string | undefined): string {
+  const configuredUrl = value?.trim() || DEFAULT_API_URL;
+  return configuredUrl.replace(/\/+$/, "");
+}
+
+export function buildApiUrl(baseUrl: string, path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizeApiBaseUrl(baseUrl)}${normalizedPath}`;
+}
+
+const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, { signal });
+  const response = await fetch(buildApiUrl(API_URL, path), { signal });
 
   if (!response.ok) {
     throw new Error(`Falha ao consultar a API: ${response.status}`);
@@ -11,7 +23,7 @@ export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> 
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(buildApiUrl(API_URL, path), {
     method: "POST",
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),

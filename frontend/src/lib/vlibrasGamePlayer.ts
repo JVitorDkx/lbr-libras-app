@@ -1,6 +1,7 @@
 import {
   ensureVLibrasWidget,
   getVLibrasRoot,
+  resetVLibrasLoaderForRetry,
   waitFor,
   type VLibrasPlayer,
   type VLibrasPlugin,
@@ -258,4 +259,24 @@ export function disposeVLibrasGamePlayer() {
     root.appendChild(widgetHost);
   }
   keepWidgetInteractionDisabled();
+}
+
+/**
+ * Prepara uma nova tentativa depois de uma falha de rede ou inicialização.
+ * O widget global existente é preservado quando o player já está saudável;
+ * apenas promessas rejeitadas e uma tag de script que falhou são descartadas.
+ */
+export function prepareVLibrasGamePlayerRetry() {
+  disposeVLibrasGamePlayer();
+  initialization = null;
+
+  if (!window.plugin?.player) {
+    plugin = null;
+    wrapper = null;
+    widgetHost = null;
+    welcomeBarrier = null;
+    preparation = null;
+    welcomeCompleted = false;
+    resetVLibrasLoaderForRetry();
+  }
 }

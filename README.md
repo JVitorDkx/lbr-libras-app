@@ -14,7 +14,7 @@ cd backend
 python -m venv .venv
 .venv/Scripts/activate
 python -m pip install -e ".[dev]"
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8001
 ```
 
 A API ficará disponível em `http://127.0.0.1:8001`. A documentação interativa estará em `http://127.0.0.1:8001/docs`.
@@ -173,6 +173,103 @@ Dentro da fase, apenas o player é exibido. O contêiner usa proporção `4 / 3`
 O FastAPI fornece `avatar_phrase` diretamente a partir de `Question.correct_answer` armazenado no SQLite. Assim, o avatar representa sempre o gabarito da pergunta atual, enquanto as alternativas permanecem sob responsabilidade da interface React.
 
 > **Nota pedagógica:** traduções automáticas devem ser revisadas por uma pessoa especialista em Libras antes do uso do protótipo como material educacional definitivo.
+
+### Resiliência da dependência externa
+
+O VLibras é carregado a partir de um serviço externo e, por isso, pode sofrer
+indisponibilidade de rede sem relação com o LBRLibras. O preload global continua
+silencioso para não bloquear o Menu. Se o motor não ficar pronto dentro do tempo
+limite, o card da pergunta preserva o restante da aula e apresenta uma mensagem
+amigável com o botão **Tentar novamente**.
+
+Na nova tentativa, o gerenciador descarta somente promessas rejeitadas e uma tag
+de script que falhou antes de registrar `window.VLibras`. Se a instância global
+estiver saudável, ela é obrigatoriamente reaproveitada. Essa distinção permite
+recuperar uma oscilação do serviço sem criar dois widgets ou corromper o canvas
+Unity. O player também permanece sem fallback de sinais artificiais: a ausência
+do avatar é informada com transparência ao estudante.
+
+## Tratamento global de falhas
+
+A árvore React é protegida por um `AppErrorBoundary`. Uma exceção inesperada de
+renderização deixa de produzir uma tela vazia e passa a exibir uma interface
+consistente, informando que o progresso salvo no backend continua protegido e
+oferecendo a recarga do aplicativo. Falhas esperadas de rede continuam tratadas
+localmente pelas telas, porque um Error Boundary não substitui o tratamento de
+requisições assíncronas.
+
+## Configuração por ambiente
+
+Nenhum endereço de produção precisa ser gravado no código-fonte.
+
+| Camada | Variável | Exemplo | Finalidade |
+| --- | --- | --- | --- |
+| Frontend | `VITE_API_URL` | `https://lbrlibras-api.onrender.com/api` | URL pública completa da API. |
+| Backend | `LBRLIBRAS_CORS_ORIGINS` | `["https://lbr-libras-app.vercel.app"]` | Lista JSON de origens autorizadas. |
+| Backend | `LBRLIBRAS_DATABASE_URL` | `sqlite:////var/data/lbrlibras.db` | Banco em volume persistente. |
+
+Os arquivos `frontend/.env.example` e `backend/.env.example` documentam os
+valores locais. Arquivos `.env` reais permanecem ignorados pelo Git. A URL do
+frontend deve incluir o prefixo `/api` e não precisa terminar com barra.
+
+## Build de produção
+
+Antes de publicar, execute as mesmas verificações usadas no desenvolvimento:
+
+```bash
+cd backend
+python -m pytest -q
+python -m ruff check .
+
+cd ../frontend
+pnpm test
+pnpm run typecheck
+pnpm run build
+```
+
+O build estático do frontend será criado em `frontend/dist`.
+
+## Publicação na nuvem
+
+### 1. Backend FastAPI no Render
+
+O arquivo `render.yaml` da raiz descreve o serviço, o comando do Uvicorn, o
+health check e um disco de 1 GB para o SQLite.
+
+1. No Render, crie um **Blueprint** conectado a este repositório e selecione o
+   `render.yaml`.
+2. Informe `LBRLIBRAS_CORS_ORIGINS` como uma lista JSON contendo o domínio real
+   do frontend, por exemplo `["https://lbr-libras-app.vercel.app"]`.
+3. Mantenha o disco montado em `/var/data`. Sem volume persistente, o SQLite pode
+   ser recriado a cada novo deploy e não é adequado para a demonstração.
+4. Depois do deploy, confirme `https://SEU-BACKEND.onrender.com/api/health` e a
+   documentação em `/docs`.
+
+O backend respeita a porta fornecida pelo provedor por meio de `$PORT`. Caso o
+plano escolhido não permita disco persistente, use um serviço que forneça volume
+ou migre `LBRLIBRAS_DATABASE_URL` para um banco gerenciado antes da banca.
+
+### 2. Frontend React no Vercel
+
+1. Importe o mesmo repositório no Vercel e defina **Root Directory** como
+   `frontend`.
+2. Selecione o framework **Vite**, use `pnpm run build` e mantenha `dist` como
+   diretório de saída.
+3. Cadastre `VITE_API_URL` com a URL pública do Render acrescida de `/api`.
+4. Publique e, em seguida, atualize `LBRLIBRAS_CORS_ORIGINS` no Render com o
+   domínio definitivo fornecido pelo Vercel.
+5. Gere um novo deploy do backend e valide Menu, Perfil, uma aula completa,
+   desbloqueio, relatório pedagógico e nova tentativa do VLibras.
+
+### Checklist para a banca
+
+- API `/api/health` respondendo e documentação `/docs` acessível.
+- Volume SQLite persistente ativo e progresso sobrevivendo a um redeploy.
+- CORS limitado ao domínio publicado, sem curinga em produção.
+- `VITE_API_URL` apontando para HTTPS e contendo `/api`.
+- Navegação testada em viewport de celular e em uma segunda rede/dispositivo.
+- Plano de demonstração ensaiado com o estado amigável de indisponibilidade do
+  VLibras, caso o serviço do governo oscile.
 
 ## Autoria e direitos
 

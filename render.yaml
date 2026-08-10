@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: lbrlibras-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -e .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: LBRLIBRAS_DATABASE_URL
+        value: sqlite:////var/data/lbrlibras.db
+      - key: LBRLIBRAS_CORS_ORIGINS
+        sync: false
+    disk:
+      name: lbrlibras-data
+      mountPath: /var/data
+      sizeGB: 1

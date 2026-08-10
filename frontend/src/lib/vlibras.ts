@@ -28,6 +28,20 @@ declare global {
 let scriptPromise: Promise<void> | null = null;
 let widgetPromise: Promise<unknown> | null = null;
 
+/**
+ * Libera somente o estado de carregamento que pode ser recriado com segurança.
+ * Uma instância saudável do widget nunca é duplicada: a tag externa só é
+ * removida quando a biblioteca nem chegou a registrar `window.VLibras`.
+ */
+export function resetVLibrasLoaderForRetry() {
+  scriptPromise = null;
+  widgetPromise = null;
+
+  if (!window.VLibras) {
+    document.getElementById(VLIBRAS_SCRIPT_ID)?.remove();
+  }
+}
+
 export function loadVLibrasScript(timeoutMs = 12_000): Promise<void> {
   if (window.VLibras) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
