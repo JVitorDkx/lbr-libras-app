@@ -32,7 +32,7 @@ O frontend ficará disponível em `http://localhost:5173`.
 ## Blocos do protótipo
 
 1. ✅ Fundação full stack e design system.
-2. ✅ Menu principal, XP e desbloqueio local.
+2. ✅ Menu principal, XP e desbloqueio por pré-requisitos.
 3. ✅ Área de jogo, feedback imediato, conclusão idempotente e +250 XP.
 4. ✅ SQLite, histórico de respostas e servidor de mídias reais.
 5. ✅ Menu autoral por categorias, perfil, estatísticas e conquistas persistentes.
@@ -44,11 +44,13 @@ O menu consulta `GET /api/game/levels`, agrupa os tópicos em Princípios básic
 
 O recorte pedagógico atual possui 16 atividades: quatro de Cumprimentos, seis do Alfabeto A–F e seis de Números de zero a cinco. A estrutura, as frases enviadas ao avatar e o status de validação estão documentados na [matriz de conteúdo](docs/MATRIZ_CONTEUDO.md).
 
-O SQLite é a fonte principal de progresso e o `LocalStorage` funciona como cópia local de apoio. A conclusão é idempotente: repetir uma aula não concede XP duplicado. O histórico pode ser consultado em `GET /api/game/progress/answers`.
+O SQLite é a única fonte de verdade do progresso. O frontend não calcula desbloqueios nem restaura XP pelo `LocalStorage`: ele apresenta os estados `locked`, `available` e `completed` devolvidos pela API. O armazenamento local permanece restrito às preferências de interface, como sons e ativação do VLibras.
+
+O backend recusa com `403` o acesso a perguntas, respostas ou conclusão de módulos bloqueados. Uma conclusão só é aceita depois que todas as questões do nível possuem ao menos um acerto persistido; tentativas incompletas recebem `409` e não ganham a recompensa da aula. O XP por primeiro acerto e a recompensa de conclusão são idempotentes e recalculados pelo histórico, impedindo totais divergentes ou alterados somente no cliente.
 
 Cada primeiro acerto em uma questão concede 25 XP. Os níveis usam limites cumulativos crescentes: o nível 2 começa em 100 XP, o nível 3 em 250 XP e os custos seguintes aumentam em 50 XP. A coluna `last_played_date` permite incrementar a ofensiva apenas uma vez por dia, manter a sequência em dias consecutivos e reiniciá-la após uma lacuna.
 
-Durante cada aula, o frontend mantém o combo atual e o maior combo de respostas corretas consecutivas. O feedback animado destaca a sequência durante o quiz e a tela de conclusão registra o resumo “Maior combo da aula”, junto do XP, ofensiva diária e eventual evolução de nível.
+Durante cada aula, o frontend mantém o combo visual instantâneo para as animações. Para o perfil, o backend reconstrói o maior combo pela ordem cronológica das respostas salvas, reiniciando a sequência após erro, troca de módulo ou repetição de questão. XP, sinais aprendidos, aulas concluídas, ofensiva e conquistas também são derivados de `answer_attempts` e `player_level_progress` antes de serem devolvidos por `GET /api/game/profile`.
 
 ## Esquema SQLite
 

@@ -8,7 +8,6 @@ import { SettingsModal } from "./components/SettingsModal";
 import { useAppSettings } from "./hooks/useAppSettings";
 import { usePlayerProgress } from "./hooks/usePlayerProgress";
 import { apiPost } from "./lib/api";
-import { PROGRESS_STORAGE_KEY } from "./lib/progress";
 import { preloadVLibrasGamePlayer } from "./lib/vlibrasGamePlayer";
 import type { ApiPlayerProgress, CompleteLevelResult, GameLevel } from "./types/game";
 
@@ -60,7 +59,6 @@ export default function App() {
     setResetError(false);
     try {
       const cleanProgress = await apiPost<ApiPlayerProgress>("/game/progress/reset");
-      localStorage.removeItem(PROGRESS_STORAGE_KEY);
       applyServerProgress(cleanProgress);
       setDataVersion((version) => version + 1);
       setScreen("menu");

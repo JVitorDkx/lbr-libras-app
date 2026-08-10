@@ -1,20 +1,11 @@
 import { useEffect, useState } from "react";
 
 import { apiGet } from "../lib/api";
-import {
-  initialProgress,
-  PROGRESS_STORAGE_KEY,
-  readProgress,
-  type PlayerProgress,
-} from "../lib/progress";
+import { initialProgress, type PlayerProgress } from "../lib/progress";
 import type { AnswerResult, ApiPlayerProgress } from "../types/game";
 
 export function usePlayerProgress() {
-  const [progress, setProgress] = useState<PlayerProgress>(readProgress);
-
-  useEffect(() => {
-    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
-  }, [progress]);
+  const [progress, setProgress] = useState<PlayerProgress>(initialProgress);
 
   useEffect(() => {
     const controller = new AbortController();

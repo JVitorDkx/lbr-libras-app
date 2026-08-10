@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 class LevelStatus(StrEnum):
     AVAILABLE = "available"
+    COMPLETED = "completed"
     LOCKED = "locked"
 
 
@@ -77,6 +78,8 @@ class PlayerProfile(BaseModel):
     total_play_seconds: int = Field(ge=0)
     signs_learned: int = Field(ge=0)
     challenges_completed: int = Field(ge=0)
+    lessons_completed: int = Field(ge=0)
+    best_combo: int = Field(ge=0)
     achievements_unlocked: int = Field(ge=0)
     achievements_total: int = Field(ge=0)
     learning_progress_percent: int = Field(ge=0, le=100)

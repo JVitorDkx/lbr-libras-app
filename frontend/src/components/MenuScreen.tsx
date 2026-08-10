@@ -78,7 +78,7 @@ export function MenuScreen({ progress, onPlay, onNavigate, onOpenSettings }: Men
               <h1 className="mb-8 text-center font-display text-[1.35rem] font-black tracking-tight">{category}</h1>
               <div className="mx-auto grid w-full max-w-[20rem] grid-cols-2 justify-items-center gap-x-10 gap-y-9">
                 {items.map((level, index) => {
-                  const status = getLevelStatus(level, progress);
+                  const status = getLevelStatus(level);
                   return (
                     <div key={level.id} className={`flex w-full justify-center ${items.length === 1 ? "col-span-2" : ""}`}>
                       <TopicCircle level={level} status={status} index={categoryIndex * 2 + index} onSelect={() => selectLevel(level, status)} />

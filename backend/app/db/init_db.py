@@ -28,12 +28,12 @@ def _migrate_existing_database() -> None:
 
     additions = {
         "players": {
-            "level_number": "INTEGER NOT NULL DEFAULT 14",
+            "level_number": "INTEGER NOT NULL DEFAULT 1",
             "last_played_date": "DATE",
-            "total_play_seconds": "INTEGER NOT NULL DEFAULT 115200",
-            "signs_learned": "INTEGER NOT NULL DEFAULT 248",
-            "challenges_completed": "INTEGER NOT NULL DEFAULT 56",
-            "achievements_unlocked": "INTEGER NOT NULL DEFAULT 12",
+            "total_play_seconds": "INTEGER NOT NULL DEFAULT 0",
+            "signs_learned": "INTEGER NOT NULL DEFAULT 0",
+            "challenges_completed": "INTEGER NOT NULL DEFAULT 0",
+            "achievements_unlocked": "INTEGER NOT NULL DEFAULT 0",
             "achievements_total": "INTEGER NOT NULL DEFAULT 30",
         },
         "levels": {

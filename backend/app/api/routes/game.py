@@ -10,7 +10,13 @@ from app.models.game import (
     PlayerProgress,
     QuestionPublic,
 )
-from app.services.game_service import game_service
+from app.services.game_service import (
+    LevelIncompleteError,
+    LevelLockedError,
+    LevelNotFoundError,
+    QuestionNotFoundError,
+    game_service,
+)
 
 
 router = APIRouter()
@@ -27,10 +33,15 @@ def list_levels() -> list[LevelSummary]:
     summary="Listar perguntas públicas de um nível",
 )
 def list_level_questions(level_id: str) -> list[QuestionPublic]:
-    questions = game_service.list_questions(level_id)
-    if questions is None:
+    try:
+        return game_service.list_questions(level_id)
+    except LevelNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nível não encontrado")
-    return questions
+    except LevelLockedError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Conclua o módulo anterior antes de acessar este nível",
+        )
 
 
 @router.post(
@@ -39,10 +50,17 @@ def list_level_questions(level_id: str) -> list[QuestionPublic]:
     summary="Validar uma resposta sem revelar o gabarito",
 )
 def validate_answer(level_id: str, question_id: str, payload: AnswerRequest) -> AnswerResult:
-    result = game_service.validate_answer(level_id, question_id, payload.answer)
-    if result is None:
+    try:
+        return game_service.validate_answer(level_id, question_id, payload.answer)
+    except LevelNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nível não encontrado")
+    except LevelLockedError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Este nível ainda está bloqueado",
+        )
+    except QuestionNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pergunta não encontrada")
-    return result
 
 
 @router.get("/progress", response_model=PlayerProgress, summary="Consultar progresso do protótipo")
@@ -61,10 +79,7 @@ def reset_progress() -> PlayerProgress:
 
 @router.get("/profile", response_model=PlayerProfile, summary="Consultar perfil e conquistas")
 def get_profile() -> PlayerProfile:
-    profile = game_service.get_profile()
-    if profile is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Jogador não encontrado")
-    return profile
+    return game_service.get_profile()
 
 
 @router.get(
@@ -82,7 +97,17 @@ def get_answer_attempts() -> list[AnswerAttemptSummary]:
     summary="Concluir um nível e conceder XP uma única vez",
 )
 def complete_level(level_id: str) -> CompleteLevelResult:
-    result = game_service.complete_level(level_id)
-    if result is None:
+    try:
+        return game_service.complete_level(level_id)
+    except LevelNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nível não encontrado")
-    return result
+    except LevelLockedError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Este nível ainda está bloqueado",
+        )
+    except LevelIncompleteError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Responda corretamente todas as questões antes de concluir o nível",
+        )

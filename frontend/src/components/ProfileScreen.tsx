@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Award, Clock3, Flame, Hand, Medal, Settings, Star, Trophy, WifiOff } from "lucide-react";
+import { Award, Flame, Hand, Medal, Settings, Sparkles, Star, Trophy, WifiOff } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { apiGet } from "../lib/api";
@@ -56,12 +56,11 @@ function ProfileHeader({ profile, onOpenSettings }: { profile: PlayerProfile; on
 }
 
 function LearningProgress({ profile }: { profile: PlayerProfile }) {
-  const hours = Math.round(profile.total_play_seconds / 3600);
   const stats = [
     { value: profile.streak_days, label: "Sequência do dia", Icon: Flame, color: "#ff4656" },
-    { value: `${hours}h`, label: "Tempo total jogando", Icon: Clock3, color: "#ff966a" },
+    { value: `${profile.best_combo}x`, label: "Maior combo", Icon: Sparkles, color: "#ff966a" },
     { value: profile.signs_learned, label: "Sinais aprendidos", Icon: Hand, color: "#32d4c3" },
-    { value: profile.challenges_completed, label: "Desafios concluídos", Icon: Trophy, color: "#6042ff" },
+    { value: profile.lessons_completed, label: "Aulas concluídas", Icon: Trophy, color: "#6042ff" },
   ];
   return <section className="rounded-[1.4rem] border border-white/[0.035] bg-[#0e1116] p-5 shadow-[0_12px_35px_rgba(0,0,0,.14)]"><h1 className="font-display text-lg font-black">Progresso de aprendizagem</h1><div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5">{stats.map(({ value, label, Icon, color }) => <div key={label}><p className="flex items-center gap-2 text-2xl font-black" style={{ color }}><Icon className="size-5" fill={label === "Sequência do dia" ? color : "none"} />{value}</p><p className="mt-1 text-xs text-[#969eaa]">{label}</p></div>)}</div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#252a32]"><motion.div initial={{ width: 0 }} animate={{ width: `${profile.learning_progress_percent}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className="h-full rounded-full bg-[#6042ff]" /></div></section>;
 }

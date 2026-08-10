@@ -1,12 +1,19 @@
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.main import app
-from app.db.models import Player
+from app.db.models import AnswerAttempt, Player
+from app.db.session import SessionLocal
 from app.services.game_service import GameService, game_service
-from app.services.gamification import level_for_xp, register_daily_activity, xp_threshold_for_level
+from app.services.gamification import (
+    level_for_xp,
+    local_today,
+    register_daily_activity,
+    xp_threshold_for_level,
+)
 
 
 client = TestClient(app)
@@ -15,6 +22,26 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def clean_player_progress() -> None:
     game_service.reset_progress()
+
+
+def complete_level_through_api(level_id: str):
+    questions_response = client.get(f"/api/game/levels/{level_id}/questions")
+    assert questions_response.status_code == 200
+    for question in questions_response.json():
+        answer_response = client.post(
+            f"/api/game/levels/{level_id}/questions/{question['id']}/answer",
+            json={"answer": question["avatar_phrase"]},
+        )
+        assert answer_response.status_code == 200
+        assert answer_response.json()["correct"] is True
+    return client.post(f"/api/game/levels/{level_id}/complete")
+
+
+def unlock_level(level_id: str) -> None:
+    if level_id in {"alfabeto", "numeros"}:
+        assert complete_level_through_api("cumprimentos").status_code == 200
+    if level_id == "numeros":
+        assert complete_level_through_api("alfabeto").status_code == 200
 
 
 def test_health_check() -> None:
@@ -109,6 +136,7 @@ def test_new_learning_modules_have_playable_questions(
     expected_ids: list[str],
     expected_phrases: list[str],
 ) -> None:
+    unlock_level(level_id)
     response = client.get(f"/api/game/levels/{level_id}/questions")
 
     assert response.status_code == 200
@@ -133,26 +161,27 @@ def test_catalog_reports_all_three_modules_as_playable() -> None:
 
 
 def test_level_completion_awards_xp_only_once() -> None:
-    first = client.post("/api/game/levels/cumprimentos/complete")
+    first = complete_level_through_api("cumprimentos")
     repeated = client.post("/api/game/levels/cumprimentos/complete")
 
     assert first.status_code == 200
     assert first.json()["awarded_xp"] == 250
-    assert first.json()["xp"] == 250
+    assert first.json()["xp"] == 350
     assert repeated.json()["awarded_xp"] == 0
-    assert repeated.json()["xp"] == 250
+    assert repeated.json()["xp"] == 350
     assert first.json()["level_number"] == 3
     assert first.json()["leveled_up"] is True
 
     levels = client.get("/api/game/levels").json()
     by_id = {level["id"]: level for level in levels}
     assert by_id["alfabeto"]["status"] == "available"
+    assert by_id["cumprimentos"]["status"] == "completed"
     assert by_id["cumprimentos"]["progress_percent"] == 100
 
 
 def test_completing_alphabet_unlocks_all_dependent_topics() -> None:
-    client.post("/api/game/levels/cumprimentos/complete")
-    client.post("/api/game/levels/alfabeto/complete")
+    complete_level_through_api("cumprimentos")
+    complete_level_through_api("alfabeto")
 
     levels = client.get("/api/game/levels").json()
     by_id = {level["id"]: level for level in levels}
@@ -167,15 +196,16 @@ def test_profile_reads_statistics_and_achievements_from_sqlite() -> None:
     profile = response.json()
     assert profile["display_name"] == "JVitor"
     assert profile["level_number"] == 1
-    assert profile["total_play_seconds"] >= 0
-    assert profile["signs_learned"] >= 0
-    assert profile["challenges_completed"] >= 0
+    assert profile["xp"] == 0
+    assert profile["signs_learned"] == 0
+    assert profile["lessons_completed"] == 0
+    assert profile["best_combo"] == 0
     assert len(profile["achievements"]) == 4
     assert profile["achievements"][0]["title"] == "Mestre do Alfabeto"
 
 
 def test_reset_clears_sqlite_progress_and_achievements() -> None:
-    client.post("/api/game/levels/cumprimentos/complete")
+    complete_level_through_api("cumprimentos")
 
     reset = client.post("/api/game/progress/reset")
     profile = client.get("/api/game/profile").json()
@@ -198,12 +228,125 @@ def test_reset_clears_sqlite_progress_and_achievements() -> None:
 
 
 def test_progress_survives_a_new_service_instance() -> None:
-    client.post("/api/game/levels/cumprimentos/complete")
+    complete_level_through_api("cumprimentos")
 
     persisted_progress = GameService().get_progress()
 
-    assert persisted_progress.xp == 250
+    assert persisted_progress.xp == 350
     assert persisted_progress.completed_level_ids == ["cumprimentos"]
+
+
+def test_locked_level_rejects_questions_answers_and_completion() -> None:
+    questions = client.get("/api/game/levels/alfabeto/questions")
+    answer = client.post(
+        "/api/game/levels/alfabeto/questions/alfabeto-a/answer",
+        json={"answer": "Letra A"},
+    )
+    completion = client.post("/api/game/levels/alfabeto/complete")
+
+    assert questions.status_code == 403
+    assert answer.status_code == 403
+    assert completion.status_code == 403
+    assert client.get("/api/game/progress").json()["xp"] == 0
+
+
+def test_incomplete_level_cannot_award_completion_xp() -> None:
+    answer = client.post(
+        "/api/game/levels/cumprimentos/questions/ola/answer",
+        json={"answer": "Olá"},
+    )
+    completion = client.post("/api/game/levels/cumprimentos/complete")
+    levels = client.get("/api/game/levels").json()
+    by_id = {level["id"]: level for level in levels}
+
+    assert answer.json()["xp"] == 25
+    assert completion.status_code == 409
+    assert client.get("/api/game/progress").json()["xp"] == 25
+    assert by_id["cumprimentos"]["status"] == "available"
+    assert by_id["cumprimentos"]["progress_percent"] == 25
+    assert by_id["alfabeto"]["status"] == "locked"
+
+
+def test_profile_metrics_are_derived_from_answer_history() -> None:
+    answers = [
+        ("ola", "Olá"),
+        ("bom-dia", "Bom dia"),
+        ("boa-tarde", "Tchau"),
+        ("boa-tarde", "Boa tarde"),
+        ("tchau", "Tchau"),
+    ]
+    for question_id, answer in answers:
+        client.post(
+            f"/api/game/levels/cumprimentos/questions/{question_id}/answer",
+            json={"answer": answer},
+        )
+    completion = client.post("/api/game/levels/cumprimentos/complete")
+    profile = client.get("/api/game/profile").json()
+
+    assert completion.status_code == 200
+    assert profile["xp"] == 350
+    assert profile["signs_learned"] == 4
+    assert profile["lessons_completed"] == 1
+    assert profile["challenges_completed"] == 1
+    assert profile["best_combo"] == 2
+    assert profile["streak_days"] == 1
+    achievements = {item["id"]: item for item in profile["achievements"]}
+    assert achievements["hundred-signs"]["current_value"] == 4
+    assert achievements["perfect-score"]["current_value"] == 0
+
+
+def test_server_repairs_tampered_player_totals_from_history() -> None:
+    client.post(
+        "/api/game/levels/cumprimentos/questions/ola/answer",
+        json={"answer": "Olá"},
+    )
+    with SessionLocal() as session:
+        player = session.get(Player, 1)
+        assert player is not None
+        player.xp = 99_999
+        player.level_number = 99
+        player.signs_learned = 999
+        player.challenges_completed = 999
+        session.commit()
+
+    progress = client.get("/api/game/progress").json()
+    profile = client.get("/api/game/profile").json()
+
+    assert progress["xp"] == 25
+    assert progress["level_number"] == 1
+    assert profile["signs_learned"] == 1
+    assert profile["lessons_completed"] == 0
+
+
+def test_profile_rebuilds_daily_streak_from_attempt_dates() -> None:
+    for question_id, answer in [
+        ("ola", "Olá"),
+        ("bom-dia", "Bom dia"),
+        ("boa-tarde", "Boa tarde"),
+    ]:
+        client.post(
+            f"/api/game/levels/cumprimentos/questions/{question_id}/answer",
+            json={"answer": answer},
+        )
+
+    today = local_today()
+    with SessionLocal() as session:
+        attempts = session.scalars(
+            select(AnswerAttempt).order_by(AnswerAttempt.id)
+        ).all()
+        for attempt, played_on in zip(
+            attempts,
+            [today - timedelta(days=2), today - timedelta(days=1), today],
+            strict=True,
+        ):
+            attempt.answered_at = datetime.combine(
+                played_on,
+                time(15),
+                tzinfo=timezone.utc,
+            )
+        session.commit()
+
+    assert client.get("/api/game/profile").json()["streak_days"] == 3
 
 
 def test_answer_attempt_is_persisted() -> None:

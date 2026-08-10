@@ -5,7 +5,7 @@ export interface GameLevel {
   order: number;
   title: string;
   description: string;
-  status: "available" | "locked";
+  status: "available" | "completed" | "locked";
   accent: LevelAccent;
   category: string;
   icon_key: string;
@@ -79,6 +79,8 @@ export interface PlayerProfile {
   total_play_seconds: number;
   signs_learned: number;
   challenges_completed: number;
+  lessons_completed: number;
+  best_combo: number;
   achievements_unlocked: number;
   achievements_total: number;
   learning_progress_percent: number;

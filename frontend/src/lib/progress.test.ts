@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { completeLevel, getLevelStatus, initialProgress, levelForXp, xpThresholdForLevel } from "./progress";
+import { getLevelStatus } from "./progress";
 import type { GameLevel } from "../types/game";
 
 const greetings: GameLevel = {
@@ -28,25 +28,12 @@ const alphabet: GameLevel = {
 };
 
 describe("progresso da trilha", () => {
-  it("mantém o primeiro nível disponível e o seguinte bloqueado", () => {
-    expect(getLevelStatus(greetings, initialProgress)).toBe("available");
-    expect(getLevelStatus(alphabet, initialProgress)).toBe("locked");
+  it("usa o estado autoritativo devolvido pela API", () => {
+    expect(getLevelStatus(greetings)).toBe("available");
+    expect(getLevelStatus({ ...alphabet, status: "locked" })).toBe("locked");
   });
 
-  it("soma XP uma única vez e desbloqueia o nível seguinte", () => {
-    const completed = completeLevel(initialProgress, greetings);
-    const repeated = completeLevel(completed, greetings);
-
-    expect(completed.xp).toBe(250);
-    expect(getLevelStatus(greetings, completed)).toBe("completed");
-    expect(getLevelStatus(alphabet, completed)).toBe("available");
-    expect(repeated).toBe(completed);
-  });
-
-  it("usa limites cumulativos crescentes para os níveis", () => {
-    expect(xpThresholdForLevel(2)).toBe(100);
-    expect(xpThresholdForLevel(3)).toBe(250);
-    expect(levelForXp(249)).toBe(2);
-    expect(levelForXp(250)).toBe(3);
+  it("preserva o estado completed sem recalculá-lo no cliente", () => {
+    expect(getLevelStatus({ ...greetings, status: "completed" })).toBe("completed");
   });
 });

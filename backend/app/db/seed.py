@@ -23,7 +23,7 @@ LEVELS = [
         "icon_key": "hands",
         "reward_xp": 250,
         "prerequisite_level_id": None,
-        "initial_progress": 80,
+        "initial_progress": 0,
     },
     {
         "id": "expressoes",
@@ -35,7 +35,7 @@ LEVELS = [
         "icon_key": "smile",
         "reward_xp": 200,
         "prerequisite_level_id": None,
-        "initial_progress": 60,
+        "initial_progress": 0,
     },
     {
         "id": "alfabeto",
@@ -47,7 +47,7 @@ LEVELS = [
         "icon_key": "letters",
         "reward_xp": 300,
         "prerequisite_level_id": "cumprimentos",
-        "initial_progress": 45,
+        "initial_progress": 0,
     },
     {
         "id": "soletracao",
@@ -59,7 +59,7 @@ LEVELS = [
         "icon_key": "spell",
         "reward_xp": 300,
         "prerequisite_level_id": "alfabeto",
-        "initial_progress": 30,
+        "initial_progress": 0,
     },
     {
         "id": "numeros",
@@ -71,7 +71,7 @@ LEVELS = [
         "icon_key": "numbers",
         "reward_xp": 300,
         "prerequisite_level_id": "alfabeto",
-        "initial_progress": 90,
+        "initial_progress": 0,
     },
 ]
 
@@ -82,14 +82,14 @@ ACHIEVEMENTS = [
         "25/26 letras",
         "trophy",
         "violet",
-        25,
+        0,
         26,
         "letras",
         1,
     ),
-    ("hundred-signs", "100 Sinais", "92/100 sinais", "medal", "cyan", 92, 100, "sinais", 2),
-    ("daily-streak", "Sequência diária", "15 dias", "badge", "coral", 15, 30, "dias", 3),
-    ("perfect-score", "Pontuação Perfeita", "4/5 testes", "star", "amber", 4, 5, "testes", 4),
+    ("hundred-signs", "100 Sinais", "0/100 sinais", "medal", "cyan", 0, 100, "sinais", 2),
+    ("daily-streak", "Sequência diária", "0/30 dias", "badge", "coral", 0, 30, "dias", 3),
+    ("perfect-score", "Pontuação Perfeita", "0/5 testes", "star", "amber", 0, 5, "testes", 4),
 ]
 
 QUESTIONS = [
@@ -257,13 +257,13 @@ def seed_database(session: Session) -> None:
         player = Player(
             id=1,
             display_name="JVitor",
-            xp=7_450,
-            streak_days=15,
-            level_number=14,
-            total_play_seconds=115_200,
-            signs_learned=248,
-            challenges_completed=56,
-            achievements_unlocked=12,
+            xp=0,
+            streak_days=0,
+            level_number=1,
+            total_play_seconds=0,
+            signs_learned=0,
+            challenges_completed=0,
+            achievements_unlocked=0,
             achievements_total=30,
         )
         session.add(player)
