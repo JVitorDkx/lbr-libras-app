@@ -3,8 +3,9 @@ import { Award, Flame, Hand, Medal, Settings, Sparkles, Star, Trophy, WifiOff } 
 import { useEffect, useState } from "react";
 
 import { apiGet } from "../lib/api";
-import type { Achievement, PlayerProfile } from "../types/game";
+import type { Achievement, LearningAnalytics, PlayerProfile } from "../types/game";
 import { AppNavigation, type MainTab } from "./AppNavigation";
+import { LearningAnalyticsSection } from "./LearningAnalyticsSection";
 
 interface ProfileScreenProps { onNavigate: (tab: MainTab) => void; onOpenSettings: () => void }
 
@@ -13,13 +14,20 @@ const achievementIcons = { trophy: Trophy, medal: Medal, badge: Award, star: Sta
 
 export function ProfileScreen({ onNavigate, onOpenSettings }: ProfileScreenProps) {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [analytics, setAnalytics] = useState<LearningAnalytics | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     setFailed(false);
-    apiGet<PlayerProfile>("/game/profile", controller.signal)
-      .then(setProfile)
+    Promise.all([
+      apiGet<PlayerProfile>("/game/profile", controller.signal),
+      apiGet<LearningAnalytics>("/game/analytics", controller.signal),
+    ])
+      .then(([profileData, analyticsData]) => {
+        setProfile(profileData);
+        setAnalytics(analyticsData);
+      })
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === "AbortError")) setFailed(true);
       });
@@ -35,6 +43,7 @@ export function ProfileScreen({ onNavigate, onOpenSettings }: ProfileScreenProps
         {profile && (
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="px-3 pb-16 pt-8">
             <LearningProgress profile={profile} />
+            {analytics && <LearningAnalyticsSection analytics={analytics} />}
             <section className="mt-9">
               <div className="mb-3 flex items-end justify-between px-1">
                 <h1 className="font-display text-[1.35rem] font-black">Conquistas</h1>

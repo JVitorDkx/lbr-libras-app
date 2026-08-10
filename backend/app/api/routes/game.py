@@ -5,6 +5,7 @@ from app.models.game import (
     AnswerRequest,
     AnswerResult,
     CompleteLevelResult,
+    LearningAnalytics,
     LevelSummary,
     PlayerProfile,
     PlayerProgress,
@@ -80,6 +81,15 @@ def reset_progress() -> PlayerProgress:
 @router.get("/profile", response_model=PlayerProfile, summary="Consultar perfil e conquistas")
 def get_profile() -> PlayerProfile:
     return game_service.get_profile()
+
+
+@router.get(
+    "/analytics",
+    response_model=LearningAnalytics,
+    summary="Consultar desempenho pedagógico por módulo",
+)
+def get_learning_analytics() -> LearningAnalytics:
+    return game_service.get_learning_analytics()
 
 
 @router.get(

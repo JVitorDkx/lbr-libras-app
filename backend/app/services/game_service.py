@@ -22,8 +22,11 @@ from app.models.game import (
     AnswerResult,
     AchievementSummary,
     CompleteLevelResult,
+    LearningAnalytics,
     LevelStatus,
     LevelSummary,
+    MasteryStatus,
+    ModulePerformance,
     PlayerProgress,
     PlayerProfile,
     QuestionPublic,
@@ -428,6 +431,77 @@ class GameService:
             )
             session.commit()
             return profile
+
+    def get_learning_analytics(self) -> LearningAnalytics:
+        with SessionLocal() as session:
+            player = self._player(session)
+            self._recalculate_player_metrics(session, player)
+            levels = session.scalars(select(Level).order_by(Level.order)).all()
+            progress_by_level = {
+                item.level_id: item
+                for item in session.scalars(
+                    select(PlayerLevelProgress).where(
+                        PlayerLevelProgress.player_id == DEFAULT_PLAYER_ID
+                    )
+                )
+            }
+            rows = self._attempt_rows(session)
+            attempts_by_level: dict[str, list[AnswerAttempt]] = defaultdict(list)
+            for attempt, level_id in rows:
+                attempts_by_level[level_id].append(attempt)
+
+            modules: list[ModulePerformance] = []
+            for level in levels:
+                total_signs = len(level.questions)
+                if total_signs == 0:
+                    continue
+
+                attempts = attempts_by_level[level.id]
+                correct_attempts = sum(1 for attempt in attempts if attempt.is_correct)
+                signs_mastered = len(
+                    {attempt.question_id for attempt in attempts if attempt.is_correct}
+                )
+                accuracy_percent = (
+                    round(correct_attempts / len(attempts) * 100) if attempts else 0
+                )
+                progress = progress_by_level.get(level.id)
+                progress_percent = progress.progress_percent if progress is not None else 0
+                if not attempts:
+                    mastery_status = MasteryStatus.NOT_STARTED
+                elif progress_percent == 100 and accuracy_percent >= 80:
+                    mastery_status = MasteryStatus.EXCELLENT
+                elif accuracy_percent >= 60:
+                    mastery_status = MasteryStatus.GOOD_PROGRESS
+                else:
+                    mastery_status = MasteryStatus.NEEDS_PRACTICE
+
+                modules.append(
+                    ModulePerformance(
+                        level_id=level.id,
+                        title=level.title,
+                        category=level.category,
+                        level_status=LevelStatus(progress.status if progress else "locked"),
+                        attempts=len(attempts),
+                        correct_attempts=correct_attempts,
+                        accuracy_percent=accuracy_percent,
+                        signs_mastered=signs_mastered,
+                        total_signs=total_signs,
+                        progress_percent=progress_percent,
+                        mastery_status=mastery_status,
+                    )
+                )
+
+            total_attempts = len(rows)
+            total_correct = sum(1 for attempt, _ in rows if attempt.is_correct)
+            session.commit()
+            return LearningAnalytics(
+                total_attempts=total_attempts,
+                correct_attempts=total_correct,
+                overall_accuracy_percent=(
+                    round(total_correct / total_attempts * 100) if total_attempts else 0
+                ),
+                modules=modules,
+            )
 
     def list_answer_attempts(self) -> list[AnswerAttemptSummary]:
         with SessionLocal() as session:

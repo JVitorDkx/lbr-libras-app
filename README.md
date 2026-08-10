@@ -52,6 +52,19 @@ Cada primeiro acerto em uma questão concede 25 XP. Os níveis usam limites cumu
 
 Durante cada aula, o frontend mantém o combo visual instantâneo para as animações. Para o perfil, o backend reconstrói o maior combo pela ordem cronológica das respostas salvas, reiniciando a sequência após erro, troca de módulo ou repetição de questão. XP, sinais aprendidos, aulas concluídas, ofensiva e conquistas também são derivados de `answer_attempts` e `player_level_progress` antes de serem devolvidos por `GET /api/game/profile`.
 
+## Métricas de aprendizagem
+
+O endpoint `GET /api/game/analytics` consolida o histórico em um relatório pedagógico por módulo. Para Cumprimentos, Alfabeto e Números, a API informa tentativas, acertos, taxa de acerto por tentativa, sinais distintos dominados, progresso do conteúdo e situação de acesso.
+
+A classificação visual segue critérios reproduzíveis:
+
+- **Excelente domínio:** conteúdo 100% concluído e pelo menos 80% de acerto.
+- **Bom progresso:** pelo menos 60% de acerto.
+- **Precisa praticar:** taxa de acerto abaixo de 60%.
+- **Ainda não iniciado:** nenhuma tentativa registrada.
+
+O sistema não apresenta tempo médio de resposta porque o modelo atual registra o horário da resposta, mas ainda não registra o instante em que a questão foi exibida. Em vez de estimar um valor impreciso, o relatório utiliza a taxa de acerto por tentativa, calculada exclusivamente a partir das evidências persistidas no SQLite.
+
 ## Esquema SQLite
 
 | Tabela | Responsabilidade |

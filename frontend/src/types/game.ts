@@ -86,3 +86,26 @@ export interface PlayerProfile {
   learning_progress_percent: number;
   achievements: Achievement[];
 }
+
+export type MasteryStatus = "excellent" | "good_progress" | "needs_practice" | "not_started";
+
+export interface ModulePerformance {
+  level_id: string;
+  title: string;
+  category: string;
+  level_status: "available" | "completed" | "locked";
+  attempts: number;
+  correct_attempts: number;
+  accuracy_percent: number;
+  signs_mastered: number;
+  total_signs: number;
+  progress_percent: number;
+  mastery_status: MasteryStatus;
+}
+
+export interface LearningAnalytics {
+  total_attempts: number;
+  correct_attempts: number;
+  overall_accuracy_percent: number;
+  modules: ModulePerformance[];
+}

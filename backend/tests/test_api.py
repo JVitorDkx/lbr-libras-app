@@ -204,6 +204,62 @@ def test_profile_reads_statistics_and_achievements_from_sqlite() -> None:
     assert profile["achievements"][0]["title"] == "Mestre do Alfabeto"
 
 
+def test_analytics_starts_with_three_playable_modules_without_fake_data() -> None:
+    response = client.get("/api/game/analytics")
+
+    assert response.status_code == 200
+    analytics = response.json()
+    assert analytics["total_attempts"] == 0
+    assert analytics["overall_accuracy_percent"] == 0
+    assert [module["level_id"] for module in analytics["modules"]] == [
+        "cumprimentos",
+        "alfabeto",
+        "numeros",
+    ]
+    assert all(
+        module["mastery_status"] == "not_started"
+        for module in analytics["modules"]
+    )
+
+
+def test_analytics_calculates_accuracy_and_progress_per_attempt() -> None:
+    for question_id, answer in [
+        ("ola", "Tchau"),
+        ("ola", "Olá"),
+        ("bom-dia", "Bom dia"),
+    ]:
+        client.post(
+            f"/api/game/levels/cumprimentos/questions/{question_id}/answer",
+            json={"answer": answer},
+        )
+
+    analytics = client.get("/api/game/analytics").json()
+    greetings = analytics["modules"][0]
+
+    assert analytics["total_attempts"] == 3
+    assert analytics["correct_attempts"] == 2
+    assert analytics["overall_accuracy_percent"] == 67
+    assert greetings["attempts"] == 3
+    assert greetings["correct_attempts"] == 2
+    assert greetings["accuracy_percent"] == 67
+    assert greetings["signs_mastered"] == 2
+    assert greetings["total_signs"] == 4
+    assert greetings["progress_percent"] == 50
+    assert greetings["mastery_status"] == "good_progress"
+
+
+def test_completed_lesson_with_high_accuracy_has_excellent_mastery() -> None:
+    completion = complete_level_through_api("cumprimentos")
+    analytics = client.get("/api/game/analytics").json()
+    greetings = analytics["modules"][0]
+
+    assert completion.status_code == 200
+    assert greetings["level_status"] == "completed"
+    assert greetings["accuracy_percent"] == 100
+    assert greetings["progress_percent"] == 100
+    assert greetings["mastery_status"] == "excellent"
+
+
 def test_reset_clears_sqlite_progress_and_achievements() -> None:
     complete_level_through_api("cumprimentos")
 

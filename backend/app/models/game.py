@@ -10,6 +10,13 @@ class LevelStatus(StrEnum):
     LOCKED = "locked"
 
 
+class MasteryStatus(StrEnum):
+    EXCELLENT = "excellent"
+    GOOD_PROGRESS = "good_progress"
+    NEEDS_PRACTICE = "needs_practice"
+    NOT_STARTED = "not_started"
+
+
 class LevelSummary(BaseModel):
     id: str
     order: int
@@ -98,3 +105,24 @@ class AnswerAttemptSummary(BaseModel):
     selected_answer: str
     correct: bool
     answered_at: datetime
+
+
+class ModulePerformance(BaseModel):
+    level_id: str
+    title: str
+    category: str
+    level_status: LevelStatus
+    attempts: int = Field(ge=0)
+    correct_attempts: int = Field(ge=0)
+    accuracy_percent: int = Field(ge=0, le=100)
+    signs_mastered: int = Field(ge=0)
+    total_signs: int = Field(ge=0)
+    progress_percent: int = Field(ge=0, le=100)
+    mastery_status: MasteryStatus
+
+
+class LearningAnalytics(BaseModel):
+    total_attempts: int = Field(ge=0)
+    correct_attempts: int = Field(ge=0)
+    overall_accuracy_percent: int = Field(ge=0, le=100)
+    modules: list[ModulePerformance]
